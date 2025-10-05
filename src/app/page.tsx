@@ -1,12 +1,38 @@
+'use client';
+
+import Header from '@/components/Header';
+import Sidebar from '@/components/Sidebar';
+import RequestBuilder from '@/components/RequestBuilder';
+import ResponseViewer from '@/components/ResponseViewer';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <h1 className="text-4xl font-bold">RestBolt</h1>
-        <p className="text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          Fast, local-first REST API client
-        </p>
-      </main>
+    <div className="h-screen flex flex-col bg-white dark:bg-gray-950">
+      <Header />
+      
+      <div className="flex-1 overflow-hidden">
+        <PanelGroup direction="horizontal">
+          {/* Sidebar - Collections */}
+          <Panel defaultSize={20} minSize={15} maxSize={30}>
+            <Sidebar />
+          </Panel>
+          
+          <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-800 hover:bg-blue-500 hover:w-1 transition-all" />
+          
+          {/* Request Builder */}
+          <Panel defaultSize={40} minSize={30}>
+            <RequestBuilder />
+          </Panel>
+          
+          <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-800 hover:bg-blue-500 hover:w-1 transition-all" />
+          
+          {/* Response Viewer */}
+          <Panel defaultSize={40} minSize={30}>
+            <ResponseViewer />
+          </Panel>
+        </PanelGroup>
+      </div>
     </div>
   );
 }
