@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { httpClient } from '@/lib/http-client';
 import Editor from '@monaco-editor/react';
+import { useHotkeys } from 'react-hotkeys-hook';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
 const METHODS_WITH_BODY = ['POST', 'PUT', 'PATCH'];
@@ -36,6 +37,32 @@ export default function RequestBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [showHeaders, setShowHeaders] = useState(false);
   const [showBody, setShowBody] = useState(false);
+  
+  const urlInputRef = useRef<HTMLInputElement>(null);
+
+  // Keyboard shortcuts
+  useHotkeys('ctrl+enter, meta+enter', (e) => {
+    e.preventDefault();
+    handleSend();
+  }, { enableOnFormTags: true });
+
+  useHotkeys('ctrl+k, meta+k', (e) => {
+    e.preventDefault();
+    urlInputRef.current?.focus();
+    urlInputRef.current?.select();
+  }, { enableOnFormTags: true });
+
+  useHotkeys('ctrl+h, meta+h', (e) => {
+    e.preventDefault();
+    setShowHeaders(prev => !prev);
+  });
+
+  useHotkeys('ctrl+/, meta+/', (e) => {
+    e.preventDefault();
+    if (hasBody) {
+      setShowBody(prev => !prev);
+    }
+  });
 
   // Auto-open body section when method supports it
   useEffect(() => {
@@ -125,6 +152,7 @@ export default function RequestBuilder() {
           </select>
           
           <input
+            ref={urlInputRef}
             type="text"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -288,9 +316,15 @@ export default function RequestBuilder() {
       )}
 
       {!showHeaders && !showBody && (
-        <div className="p-4 text-xs text-gray-500 dark:text-gray-400 mt-auto">
-          <p>Press Enter to send request</p>
-          <p className="mt-1">Try POST to https://jsonplaceholder.typicode.com/posts</p>
+        <div className="p-4 text-xs text-gray-500 dark:text-gray-400 mt-auto space-y-2">
+          <div>
+            <p className="font-semibold mb-1">Keyboard Shortcuts:</p>
+            <p>⌘/Ctrl + Enter - Send request</p>
+            <p>⌘/Ctrl + K - Focus URL bar</p>
+            <p>⌘/Ctrl + H - Toggle headers</p>
+            <p>⌘/Ctrl + / - Toggle body</p>
+          </div>
+          <p className="pt-2 border-t border-gray-200 dark:border-gray-700">Try POST to https://jsonplaceholder.typicode.com/posts</p>
         </div>
       )}
     </div>
