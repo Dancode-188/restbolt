@@ -5,6 +5,7 @@ import { useStore } from '@/lib/store';
 import { httpClient } from '@/lib/http-client';
 import { historyService } from '@/lib/history-service';
 import { collectionsService } from '@/lib/collections-service';
+import { environmentService } from '@/lib/environment-service';
 import { HistoryItem } from '@/lib/db';
 import { Request } from '@/types';
 import Editor from '@monaco-editor/react';
@@ -153,17 +154,33 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
     setError(null);
     
     try {
+      // Get active environment for variable replacement
+      const activeEnv = await environmentService.getActiveEnvironment();
+      const envVars = activeEnv?.variables || {};
+
+      // Replace variables in URL
+      const processedUrl = environmentService.replaceVariables(url.trim(), envVars);
+
+      // Replace variables in headers
       const headersObject = headers
         .filter(h => h.enabled && h.key.trim())
-        .reduce((acc, h) => ({ ...acc, [h.key.trim()]: h.value }), {});
+        .reduce((acc, h) => ({ 
+          ...acc, 
+          [h.key.trim()]: environmentService.replaceVariables(h.value, envVars)
+        }), {});
+
+      // Replace variables in body
+      const processedBody = METHODS_WITH_BODY.includes(method) 
+        ? environmentService.replaceVariables(body, envVars)
+        : undefined;
 
       const startTime = performance.now();
       const result = await httpClient.sendRequest({
         method,
-        url: url.trim(),
+        url: processedUrl,
         headers: headersObject,
         params: {},
-        body: METHODS_WITH_BODY.includes(method) ? body : undefined,
+        body: processedBody,
       });
       const endTime = performance.now();
       const responseTime = Math.round(endTime - startTime);
@@ -178,13 +195,15 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         size: responseSize,
       });
 
-      // Save to history
+      // Save to history with original values (including variables)
       await historyService.addToHistory({
         id: crypto.randomUUID(),
         name: `${method} ${url.trim()}`,
         method,
         url: url.trim(),
-        headers: headersObject,
+        headers: headers
+          .filter(h => h.enabled && h.key.trim())
+          .reduce((acc, h) => ({ ...acc, [h.key.trim()]: h.value }), {}),
         params: {},
         body: METHODS_WITH_BODY.includes(method) ? body : undefined,
         createdAt: new Date(),
