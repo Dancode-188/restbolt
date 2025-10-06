@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { Request } from '@/types';
+import { exportService } from '@/lib/export-service';
 
 interface CollectionsProps {
   onSelectRequest: (request: Request) => void;
@@ -13,6 +14,8 @@ export default function Collections({ onSelectRequest }: CollectionsProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set());
+  const [importMessage, setImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const collections = useLiveQuery(() => db.collections.toArray());
 
@@ -58,6 +61,47 @@ export default function Collections({ onSelectRequest }: CollectionsProps) {
     }
   };
 
+  const handleExportAll = async () => {
+    const json = await exportService.exportCollections();
+    const filename = `restbolt-export-${new Date().toISOString().split('T')[0]}.json`;
+    exportService.downloadFile(json, filename);
+  };
+
+  const handleExportCollection = async (collectionId: string, collectionName: string) => {
+    const json = await exportService.exportCollection(collectionId);
+    const filename = `${collectionName.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+    exportService.downloadFile(json, filename);
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const result = await exportService.importData(text);
+      
+      setImportMessage({
+        type: 'success',
+        text: `Imported ${result.collections} collection(s)${result.history > 0 ? ` and ${result.history} history item(s)` : ''}`,
+      });
+      
+      setTimeout(() => setImportMessage(null), 5000);
+    } catch (error) {
+      setImportMessage({
+        type: 'error',
+        text: error instanceof Error ? error.message : 'Failed to import file',
+      });
+      
+      setTimeout(() => setImportMessage(null), 5000);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   if (!collections) {
     return <div className="p-4 text-xs text-gray-500">Loading...</div>;
   }
@@ -69,13 +113,51 @@ export default function Collections({ onSelectRequest }: CollectionsProps) {
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
             Collections
           </h3>
-          <button
-            onClick={() => setIsCreating(true)}
-            className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-          >
-            + New
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+              title="Import collections"
+            >
+              Import
+            </button>
+            {collections && collections.length > 0 && (
+              <button
+                onClick={handleExportAll}
+                className="px-2 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                title="Export all collections"
+              >
+                Export All
+              </button>
+            )}
+            <button
+              onClick={() => setIsCreating(true)}
+              className="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+            >
+              + New
+            </button>
+          </div>
         </div>
+
+        {/* Hidden file input for import */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          onChange={handleImport}
+          className="hidden"
+        />
+
+        {/* Import message */}
+        {importMessage && (
+          <div className={`mt-2 p-2 rounded text-xs ${
+            importMessage.type === 'success' 
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+          }`}>
+            {importMessage.text}
+          </div>
+        )}
 
         {isCreating && (
           <div className="flex gap-2 mt-2">
@@ -136,13 +218,24 @@ export default function Collections({ onSelectRequest }: CollectionsProps) {
                     ({collection.requests.length})
                   </span>
                 </button>
-                <button
-                  onClick={() => deleteCollection(collection.id)}
-                  className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                  title="Delete collection"
-                >
-                  ×
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => handleExportCollection(collection.id, collection.name)}
+                    className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Export collection"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => deleteCollection(collection.id)}
+                    className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    title="Delete collection"
+                  >
+                    ×
+                  </button>
+                </div>
               </div>
 
               {expandedCollections.has(collection.id) && (
