@@ -50,6 +50,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const [showHeaders, setShowHeaders] = useState(false);
   const [showBody, setShowBody] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [showAuthHelper, setShowAuthHelper] = useState(false);
   const [requestName, setRequestName] = useState('');
   
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -146,6 +147,41 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
 
   const removeHeader = (index: number) => {
     setHeaders(headers.filter((_, i) => i !== index));
+  };
+
+  // Auth helper functions
+  const applyBearerToken = (token: string = '') => {
+    // Remove existing Authorization header
+    const filtered = headers.filter(h => h.key.toLowerCase() !== 'authorization');
+    setHeaders([
+      ...filtered,
+      { key: 'Authorization', value: `Bearer ${token}`, enabled: true }
+    ]);
+    setShowAuthHelper(false);
+    if (!showHeaders) setShowHeaders(true);
+  };
+
+  const applyBasicAuth = (username: string = '', password: string = '') => {
+    // Remove existing Authorization header
+    const filtered = headers.filter(h => h.key.toLowerCase() !== 'authorization');
+    const credentials = btoa(`${username}:${password}`);
+    setHeaders([
+      ...filtered,
+      { key: 'Authorization', value: `Basic ${credentials}`, enabled: true }
+    ]);
+    setShowAuthHelper(false);
+    if (!showHeaders) setShowHeaders(true);
+  };
+
+  const applyApiKey = (headerName: string = 'X-API-Key', apiKey: string = '') => {
+    // Remove existing header with same name
+    const filtered = headers.filter(h => h.key.toLowerCase() !== headerName.toLowerCase());
+    setHeaders([
+      ...filtered,
+      { key: headerName, value: apiKey, enabled: true }
+    ]);
+    setShowAuthHelper(false);
+    if (!showHeaders) setShowHeaders(true);
   };
 
   const handleSend = async () => {
@@ -365,26 +401,158 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
           </div>
         )}
 
+        {/* Auth Helper Panel */}
+        {showAuthHelper && (
+          <div className="border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between flex-shrink-0">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Authentication Helper
+              </h3>
+              <button
+                onClick={() => setShowAuthHelper(false)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {/* Bearer Token */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded p-3 space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Bearer Token</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Adds Authorization: Bearer &lt;token&gt; header
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Enter token or {{variable}}"
+                    id="bearer-token-input"
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <button
+                    onClick={() => {
+                      const input = document.getElementById('bearer-token-input') as HTMLInputElement;
+                      applyBearerToken(input.value);
+                      input.value = '';
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              {/* Basic Auth */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded p-3 space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Basic Authentication</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Adds Authorization: Basic &lt;base64(username:password)&gt; header
+                </p>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Username"
+                    id="basic-auth-username"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    id="basic-auth-password"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <button
+                    onClick={() => {
+                      const usernameInput = document.getElementById('basic-auth-username') as HTMLInputElement;
+                      const passwordInput = document.getElementById('basic-auth-password') as HTMLInputElement;
+                      applyBasicAuth(usernameInput.value, passwordInput.value);
+                      usernameInput.value = '';
+                      passwordInput.value = '';
+                    }}
+                    className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+
+              {/* API Key */}
+              <div className="border border-gray-200 dark:border-gray-700 rounded p-3 space-y-2">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">API Key</h4>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Adds a custom header with your API key
+                </p>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Header name (e.g., X-API-Key)"
+                    id="api-key-header"
+                    defaultValue="X-API-Key"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <input
+                    type="text"
+                    placeholder="API key value or {{variable}}"
+                    id="api-key-value"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                  <button
+                    onClick={() => {
+                      const headerInput = document.getElementById('api-key-header') as HTMLInputElement;
+                      const valueInput = document.getElementById('api-key-value') as HTMLInputElement;
+                      applyApiKey(headerInput.value, valueInput.value);
+                      valueInput.value = '';
+                    }}
+                    className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-red-700 dark:text-red-400">
             {error}
           </div>
         )}
 
-        <button
-          onClick={() => setShowHeaders(!showHeaders)}
-          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-        >
-          <svg
-            className={`w-4 h-4 transition-transform ${showHeaders ? 'rotate-90' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setShowAuthHelper(!showAuthHelper)}
+            className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          Headers {headers.length > 0 && `(${headers.filter(h => h.enabled).length})`}
-        </button>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Auth Helper
+          </button>
+
+          <button
+            onClick={() => setShowHeaders(!showHeaders)}
+            className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          >
+            <svg
+              className={`w-4 h-4 transition-transform ${showHeaders ? 'rotate-90' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            Headers {headers.length > 0 && `(${headers.filter(h => h.enabled).length})`}
+          </button>
+        </div>
 
         {hasBody && (
           <button
