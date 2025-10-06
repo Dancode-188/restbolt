@@ -10,6 +10,9 @@ export default function Environments() {
   const [newEnvName, setNewEnvName] = useState('');
   const [editingEnv, setEditingEnv] = useState<string | null>(null);
   const [editVariables, setEditVariables] = useState<Record<string, string>>({});
+  const [isAddingVariable, setIsAddingVariable] = useState(false);
+  const [newVarKey, setNewVarKey] = useState('');
+  const [newVarValue, setNewVarValue] = useState('');
 
   const environments = useLiveQuery(() => db.environments.toArray());
 
@@ -40,12 +43,30 @@ export default function Environments() {
     await environmentService.updateEnvironment(editingEnv, { variables: editVariables });
     setEditingEnv(null);
     setEditVariables({});
+    setIsAddingVariable(false);
+    setNewVarKey('');
+    setNewVarValue('');
   };
 
-  const addVariable = () => {
-    const key = prompt('Variable name (without {{}}):');
-    if (!key) return;
-    setEditVariables({ ...editVariables, [key.trim()]: '' });
+  const startAddingVariable = () => {
+    setIsAddingVariable(true);
+  };
+
+  const confirmAddVariable = () => {
+    if (!newVarKey.trim()) return;
+    setEditVariables({ 
+      ...editVariables, 
+      [newVarKey.trim()]: newVarValue 
+    });
+    setIsAddingVariable(false);
+    setNewVarKey('');
+    setNewVarValue('');
+  };
+
+  const cancelAddVariable = () => {
+    setIsAddingVariable(false);
+    setNewVarKey('');
+    setNewVarValue('');
   };
 
   const updateVariable = (key: string, value: string) => {
@@ -159,15 +180,63 @@ export default function Environments() {
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                         Variables
                       </span>
-                      <button
-                        onClick={addVariable}
-                        className="px-2 py-1 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                      >
-                        + Add
-                      </button>
+                      {!isAddingVariable && (
+                        <button
+                          onClick={startAddingVariable}
+                          className="px-2 py-1 text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                        >
+                          + Add
+                        </button>
+                      )}
                     </div>
 
                     <div className="space-y-2">
+                      {/* New variable form */}
+                      {isAddingVariable && (
+                        <div className="flex gap-2 items-center p-2 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded">
+                          <div className="flex-1 grid grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              value={newVarKey}
+                              onChange={(e) => setNewVarKey(e.target.value)}
+                              placeholder="Variable name"
+                              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') confirmAddVariable();
+                                if (e.key === 'Escape') cancelAddVariable();
+                              }}
+                              autoFocus
+                            />
+                            <input
+                              type="text"
+                              value={newVarValue}
+                              onChange={(e) => setNewVarValue(e.target.value)}
+                              placeholder="Value"
+                              className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') confirmAddVariable();
+                                if (e.key === 'Escape') cancelAddVariable();
+                              }}
+                            />
+                          </div>
+                          <button
+                            onClick={confirmAddVariable}
+                            className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                            title="Add variable"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={cancelAddVariable}
+                            className="text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                            title="Cancel"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Existing variables */}
                       {Object.entries(editVariables).map(([key, value]) => (
                         <div key={key} className="flex gap-2 items-center">
                           <div className="flex-1 grid grid-cols-2 gap-2">
