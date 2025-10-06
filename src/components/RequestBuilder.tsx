@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useStore } from '@/lib/store';
 import { httpClient } from '@/lib/http-client';
+import { historyService } from '@/lib/history-service';
+import { HistoryItem } from '@/lib/db';
 import Editor from '@monaco-editor/react';
 import { useHotkeys } from 'react-hotkeys-hook';
 
@@ -27,7 +29,11 @@ const DEFAULT_BODY = `{
   "completed": false
 }`;
 
-export default function RequestBuilder() {
+interface RequestBuilderProps {
+  selectedHistoryItem: HistoryItem | null;
+}
+
+export default function RequestBuilder({ selectedHistoryItem }: RequestBuilderProps) {
   const { setCurrentResponse, theme } = useStore();
   const [method, setMethod] = useState<typeof HTTP_METHODS[number]>('GET');
   const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/posts');
@@ -63,6 +69,26 @@ export default function RequestBuilder() {
       setShowBody(prev => !prev);
     }
   });
+
+  // Load history item into form when selected
+  useEffect(() => {
+    if (selectedHistoryItem) {
+      setMethod(selectedHistoryItem.method);
+      setUrl(selectedHistoryItem.url);
+      
+      // Convert headers object to array
+      const headersArray = Object.entries(selectedHistoryItem.headers).map(([key, value]) => ({
+        key,
+        value,
+        enabled: true,
+      }));
+      setHeaders(headersArray);
+      
+      if (selectedHistoryItem.body) {
+        setBody(selectedHistoryItem.body);
+      }
+    }
+  }, [selectedHistoryItem]);
 
   // Auto-open body section when method supports it
   useEffect(() => {
@@ -121,6 +147,22 @@ export default function RequestBuilder() {
         data: result.data,
         time: responseTime,
         size: responseSize,
+      });
+
+      // Save to history
+      await historyService.addToHistory({
+        id: crypto.randomUUID(),
+        name: `${method} ${url.trim()}`,
+        method,
+        url: url.trim(),
+        headers: headersObject,
+        params: {},
+        body: METHODS_WITH_BODY.includes(method) ? body : undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }, {
+        status: result.status,
+        statusText: result.statusText,
       });
     } catch (err: any) {
       setError(err.message || 'Failed to send request');
