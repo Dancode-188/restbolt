@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import History from './History';
+import Collections from './Collections';
 import { HistoryItem } from '@/lib/db';
+import { Request } from '@/types';
 
 interface SidebarProps {
   onSelectHistoryItem: (item: HistoryItem) => void;
+  onSelectRequest: (request: Request) => void;
 }
 
-export default function Sidebar({ onSelectHistoryItem }: SidebarProps) {
+export default function Sidebar({ onSelectHistoryItem, onSelectRequest }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<'history' | 'collections'>('history');
 
   return (
@@ -38,11 +41,7 @@ export default function Sidebar({ onSelectHistoryItem }: SidebarProps) {
 
       <div className="flex-1 overflow-hidden">
         {activeTab === 'history' && <History onSelectRequest={onSelectHistoryItem} />}
-        {activeTab === 'collections' && (
-          <div className="p-4 text-xs text-gray-500 dark:text-gray-400">
-            Collections coming soon...
-          </div>
-        )}
+        {activeTab === 'collections' && <Collections onSelectRequest={onSelectRequest} />}
       </div>
     </div>
   );
