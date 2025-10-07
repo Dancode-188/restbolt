@@ -1,7 +1,22 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Request, Response, Collection, Environment } from '@/types';
 
+export interface Tab {
+  id: string;
+  name: string;
+  method: string;
+  url: string;
+  headers: Array<{ key: string; value: string; enabled: boolean }>;
+  body: string;
+  isDirty: boolean;
+}
+
 interface AppState {
+  // Tabs
+  tabs: Tab[];
+  activeTabId: string | null;
+  
   // Current request/response
   currentRequest: Request | null;
   currentResponse: Response | null;
@@ -19,6 +34,10 @@ interface AppState {
   sidebarCollapsed: boolean;
   
   // Actions
+  addTab: () => void;
+  closeTab: (id: string) => void;
+  setActiveTab: (id: string) => void;
+  updateTab: (id: string, updates: Partial<Tab>) => void;
   setCurrentRequest: (request: Request | null) => void;
   setCurrentResponse: (response: Response | null) => void;
   addCollection: (collection: Collection) => void;
@@ -31,20 +50,86 @@ interface AppState {
   toggleSidebar: () => void;
 }
 
-export const useStore = create<AppState>((set) => ({
-  // Initial state
-  currentRequest: null,
-  currentResponse: null,
-  collections: [],
-  history: [],
-  environments: [],
-  activeEnvironment: null,
-  theme: 'dark',
-  sidebarCollapsed: false,
-  
-  // Actions
-  setCurrentRequest: (request) => set({ currentRequest: request }),
-  setCurrentResponse: (response) => set({ currentResponse: response }),
+export const useStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      // Initial state
+      tabs: [{
+        id: 'default',
+        name: 'New Request',
+        method: 'GET',
+        url: 'https://jsonplaceholder.typicode.com/posts',
+        headers: [],
+        body: '{\n  "title": "Example Todo",\n  "completed": false\n}',
+        isDirty: false,
+      }],
+      activeTabId: 'default',
+      currentRequest: null,
+      currentResponse: null,
+      collections: [],
+      history: [],
+      environments: [],
+      activeEnvironment: null,
+      theme: 'dark',
+      sidebarCollapsed: false,
+      
+      // Tab actions
+      addTab: () => set((state) => {
+        const newTab: Tab = {
+          id: `tab-${Date.now()}`,
+          name: 'New Request',
+          method: 'GET',
+          url: 'https://jsonplaceholder.typicode.com/posts',
+          headers: [],
+          body: '{\n  "title": "Example Todo",\n  "completed": false\n}',
+          isDirty: false,
+        };
+        return {
+          tabs: [...state.tabs, newTab],
+          activeTabId: newTab.id,
+        };
+      }),
+      
+      closeTab: (id) => set((state) => {
+        const tabs = state.tabs.filter(t => t.id !== id);
+        // Don't allow closing the last tab
+        if (tabs.length === 0) {
+          return {
+            tabs: [{
+              id: 'default',
+              name: 'New Request',
+              method: 'GET',
+              url: 'https://jsonplaceholder.typicode.com/posts',
+              headers: [],
+              body: '{\n  "title": "Example Todo",\n  "completed": false\n}',
+              isDirty: false,
+            }],
+            activeTabId: 'default',
+          };
+        }
+        // If closing active tab, switch to the next tab or previous
+        let newActiveTabId = state.activeTabId;
+        if (id === state.activeTabId) {
+          const closedIndex = state.tabs.findIndex(t => t.id === id);
+          newActiveTabId = tabs[Math.min(closedIndex, tabs.length - 1)]?.id || tabs[0].id;
+        }
+        return {
+          tabs,
+          activeTabId: newActiveTabId,
+        };
+      }),
+      
+      setActiveTab: (id) => set({ activeTabId: id }),
+      
+      updateTab: (id, updates) => set((state) => ({
+        tabs: state.tabs.map(tab =>
+          tab.id === id ? { ...tab, ...updates, isDirty: true } : tab
+        ),
+      })),
+      
+      // Actions
+      setCurrentRequest: (request) => set({ currentRequest: request }),
+      setCurrentResponse: (response) => set({ currentResponse: response }),
   
   addCollection: (collection) => set((state) => ({
     collections: [...state.collections, collection],
@@ -75,4 +160,13 @@ export const useStore = create<AppState>((set) => ({
   toggleSidebar: () => set((state) => ({
     sidebarCollapsed: !state.sidebarCollapsed,
   })),
-}));
+}),
+  {
+    name: 'restbolt-storage',
+    partialize: (state) => ({
+      tabs: state.tabs,
+      activeTabId: state.activeTabId,
+      theme: state.theme,
+    }),
+  }
+));

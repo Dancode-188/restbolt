@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
+import Tabs from '@/components/Tabs';
 import RequestBuilder from '@/components/RequestBuilder';
 import ResponseViewer from '@/components/ResponseViewer';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
@@ -41,10 +42,15 @@ export default function Home() {
           
           {/* Request Builder */}
           <Panel defaultSize={40} minSize={30}>
-            <RequestBuilder 
-              selectedHistoryItem={selectedHistoryItem}
-              selectedRequest={selectedRequest}
-            />
+            <div className="h-full flex flex-col">
+              <Tabs />
+              <div className="flex-1 overflow-hidden">
+                <RequestBuilder 
+                  selectedHistoryItem={selectedHistoryItem}
+                  selectedRequest={selectedRequest}
+                />
+              </div>
+            </div>
           </Panel>
           
           <PanelResizeHandle className="w-px bg-gray-200 dark:bg-gray-800 hover:bg-blue-500 hover:w-1 transition-all" />

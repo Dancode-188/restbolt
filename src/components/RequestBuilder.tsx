@@ -40,7 +40,7 @@ interface RequestBuilderProps {
 }
 
 export default function RequestBuilder({ selectedHistoryItem, selectedRequest }: RequestBuilderProps) {
-  const { setCurrentResponse, theme } = useStore();
+  const { setCurrentResponse, theme, tabs, activeTabId, updateTab } = useStore();
   const [method, setMethod] = useState<typeof HTTP_METHODS[number]>('GET');
   const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/posts');
   const [headers, setHeaders] = useState<Header[]>([]);
@@ -79,6 +79,41 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       setShowBody(prev => !prev);
     }
   });
+
+  // Load active tab data
+  useEffect(() => {
+    if (activeTabId) {
+      const activeTab = tabs.find(t => t.id === activeTabId);
+      if (activeTab) {
+        setMethod(activeTab.method as typeof HTTP_METHODS[number]);
+        setUrl(activeTab.url);
+        setHeaders(activeTab.headers);
+        setBody(activeTab.body);
+      }
+    }
+  }, [activeTabId, tabs]);
+
+  // Sync tab state when form data changes
+  useEffect(() => {
+    if (activeTabId && !selectedHistoryItem && !selectedRequest) {
+      const activeTab = tabs.find(t => t.id === activeTabId);
+      // Only update if data actually changed
+      if (activeTab && (
+        activeTab.method !== method ||
+        activeTab.url !== url ||
+        JSON.stringify(activeTab.headers) !== JSON.stringify(headers) ||
+        activeTab.body !== body
+      )) {
+        updateTab(activeTabId, {
+          method,
+          url,
+          headers,
+          body,
+          name: url ? `${method} ${new URL(url).pathname}` : 'New Request',
+        });
+      }
+    }
+  }, [method, url, headers, body, activeTabId, tabs, selectedHistoryItem, selectedRequest, updateTab]);
 
   // Load history item into form when selected
   useEffect(() => {
@@ -248,6 +283,11 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         status: result.status,
         statusText: result.statusText,
       });
+
+      // Clear isDirty flag after successful send
+      if (activeTabId) {
+        updateTab(activeTabId, { isDirty: false });
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to send request');
     } finally {
