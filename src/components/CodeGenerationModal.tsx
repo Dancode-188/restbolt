@@ -78,7 +78,7 @@ export default function CodeGenerationModal({
       onClick={onClose}
     >
       <div 
-        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-[800px] max-w-[90vw] max-h-[80vh] flex flex-col"
+        className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-[800px] max-w-[90vw] h-[600px] max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
