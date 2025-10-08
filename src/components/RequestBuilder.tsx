@@ -894,7 +894,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       )}
 
       {showVariables && (
-        <div className="flex-1 border-t border-gray-200 dark:border-gray-800 flex flex-col min-h-0 max-h-96">
+        <div className="border-t border-gray-200 dark:border-gray-800 h-96 flex flex-col min-h-0">
           <VariablesPanel />
         </div>
       )}
