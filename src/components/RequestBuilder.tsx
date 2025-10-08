@@ -63,6 +63,9 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const isLoadingTabData = useRef(false);
   const collections = useLiveQuery(() => db.collections.toArray());
 
+  // Derived state - must be before hooks that use it
+  const hasBody = METHODS_WITH_BODY.includes(method);
+
   // Keyboard shortcuts
   useHotkeys('ctrl+enter, meta+enter', (e) => {
     e.preventDefault();
@@ -408,8 +411,6 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
     setShowSaveDialog(false);
     setRequestName('');
   };
-
-  const hasBody = METHODS_WITH_BODY.includes(method);
 
   return (
     <div className="h-full bg-white dark:bg-gray-950 flex flex-col">
