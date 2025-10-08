@@ -50,17 +50,13 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const [body, setBody] = useState(DEFAULT_BODY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showHeaders, setShowHeaders] = useState(false);
-  const [showBody, setShowBody] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showAuthHelper, setShowAuthHelper] = useState(false);
   const [showCodeGen, setShowCodeGen] = useState(false);
   const [requestName, setRequestName] = useState('');
   const [preRequestScript, setPreRequestScript] = useState('');
   const [testScript, setTestScript] = useState('');
-  const [showPreRequest, setShowPreRequest] = useState(false);
-  const [showTests, setShowTests] = useState(false);
-  const [showVariables, setShowVariables] = useState(false);
+  const [activeTab, setActiveTab] = useState<'headers' | 'body' | 'prerequest' | 'tests' | 'variables' | null>(null);
   const [scriptResult, setScriptResult] = useState<ScriptResult | null>(null);
   
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -81,14 +77,40 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
 
   useHotkeys('ctrl+h, meta+h', (e) => {
     e.preventDefault();
-    setShowHeaders(prev => !prev);
+    setActiveTab(prev => prev === 'headers' ? null : 'headers');
   });
 
   useHotkeys('ctrl+/, meta+/', (e) => {
     e.preventDefault();
     if (hasBody) {
-      setShowBody(prev => !prev);
+      setActiveTab(prev => prev === 'body' ? null : 'body');
     }
+  });
+
+  // Tab switching shortcuts
+  useHotkeys('ctrl+1, meta+1', (e) => {
+    e.preventDefault();
+    setActiveTab('headers');
+  });
+
+  useHotkeys('ctrl+2, meta+2', (e) => {
+    e.preventDefault();
+    if (hasBody) setActiveTab('body');
+  });
+
+  useHotkeys('ctrl+3, meta+3', (e) => {
+    e.preventDefault();
+    setActiveTab('prerequest');
+  });
+
+  useHotkeys('ctrl+4, meta+4', (e) => {
+    e.preventDefault();
+    setActiveTab('tests');
+  });
+
+  useHotkeys('ctrl+5, meta+5', (e) => {
+    e.preventDefault();
+    setActiveTab('variables');
   });
 
   // Load active tab data
@@ -172,14 +194,14 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
     }
   }, [selectedRequest]);
 
-  // Auto-open body section when method supports it
+  // Auto-open body tab when method supports it
   useEffect(() => {
-    if (METHODS_WITH_BODY.includes(method)) {
-      setShowBody(true);
-    } else {
-      setShowBody(false);
+    if (METHODS_WITH_BODY.includes(method) && !activeTab) {
+      setActiveTab('body');
+    } else if (!METHODS_WITH_BODY.includes(method) && activeTab === 'body') {
+      setActiveTab(null);
     }
-  }, [method]);
+  }, [method, activeTab]);
 
   const addHeader = (preset?: { key: string; value: string }) => {
     const newHeader: Header = {
@@ -209,7 +231,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       { key: 'Authorization', value: `Bearer ${token}`, enabled: true }
     ]);
     setShowAuthHelper(false);
-    if (!showHeaders) setShowHeaders(true);
+    setActiveTab('headers');
   };
 
   const applyBasicAuth = (username: string = '', password: string = '') => {
@@ -221,7 +243,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       { key: 'Authorization', value: `Basic ${credentials}`, enabled: true }
     ]);
     setShowAuthHelper(false);
-    if (!showHeaders) setShowHeaders(true);
+    setActiveTab('headers');
   };
 
   const applyApiKey = (headerName: string = 'X-API-Key', apiKey: string = '') => {
@@ -232,7 +254,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       { key: headerName, value: apiKey, enabled: true }
     ]);
     setShowAuthHelper(false);
-    if (!showHeaders) setShowHeaders(true);
+    setActiveTab('headers');
   };
 
   const handleSend = async () => {
@@ -642,7 +664,8 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
           </div>
         )}
 
-        <div className="flex items-center gap-4">
+        {/* Auth Helper - Separate from tabs */}
+        <div className="flex items-center">
           <button
             onClick={() => setShowAuthHelper(!showAuthHelper)}
             className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -657,87 +680,70 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
             </svg>
             Auth Helper
           </button>
+        </div>
+
+        {/* Tab Bar */}
+        <div className="flex items-center border-b border-gray-200 dark:border-gray-800 -mb-px">
+          <button
+            onClick={() => setActiveTab(activeTab === 'headers' ? null : 'headers')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'headers'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
+            }`}
+          >
+            Headers {headers.length > 0 && `(${headers.filter(h => h.enabled).length})`}
+          </button>
+
+          {hasBody && (
+            <button
+              onClick={() => setActiveTab(activeTab === 'body' ? null : 'body')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === 'body'
+                  ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
+              }`}
+            >
+              Body
+            </button>
+          )}
 
           <button
-            onClick={() => setShowHeaders(!showHeaders)}
-            className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            onClick={() => setActiveTab(activeTab === 'prerequest' ? null : 'prerequest')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'prerequest'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
+            }`}
           >
-            <svg
-              className={`w-4 h-4 transition-transform ${showHeaders ? 'rotate-90' : ''}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-            Headers {headers.length > 0 && `(${headers.filter(h => h.enabled).length})`}
+            Pre-request Script
+          </button>
+
+          <button
+            onClick={() => setActiveTab(activeTab === 'tests' ? null : 'tests')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'tests'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
+            }`}
+          >
+            Tests
+          </button>
+
+          <button
+            onClick={() => setActiveTab(activeTab === 'variables' ? null : 'variables')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'variables'
+                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
+            }`}
+          >
+            Variables {scriptingService.getAllVariables().size > 0 && `(${scriptingService.getAllVariables().size})`}
           </button>
         </div>
 
-        {hasBody && (
-          <button
-            onClick={() => setShowBody(!showBody)}
-            className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          >
-            <svg
-              className={`w-4 h-4 transition-transform ${showBody ? 'rotate-90' : ''}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-            Body
-          </button>
-        )}
-
-        <button
-          onClick={() => setShowPreRequest(!showPreRequest)}
-          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-        >
-          <svg
-            className={`w-4 h-4 transition-transform ${showPreRequest ? 'rotate-90' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          Pre-request Script
-        </button>
-
-        <button
-          onClick={() => setShowTests(!showTests)}
-          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-        >
-          <svg
-            className={`w-4 h-4 transition-transform ${showTests ? 'rotate-90' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-          Tests
-        </button>
-
-        <button
-          onClick={() => setShowVariables(!showVariables)}
-          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-        >
-          <svg
-            className={`w-4 h-4 transition-transform ${showVariables ? 'rotate-90' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-          </svg>
-          Variables
-        </button>
-      </div>
-
-      {showHeaders && (
+      {/* Tab Content */}
+      {activeTab === 'headers' && (
         <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">
           <div className="p-4 space-y-3 max-h-64 overflow-auto">
             {headers.length === 0 && (
@@ -800,7 +806,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         </div>
       )}
 
-      {hasBody && showBody && (
+      {activeTab === 'body' && hasBody && (
         <div className="flex-1 border-t border-gray-200 dark:border-gray-800 flex flex-col min-h-0">
           <div className="p-2 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
             <span className="text-xs text-gray-500 dark:text-gray-400">Request Body (JSON)</span>
@@ -839,7 +845,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         </div>
       )}
 
-      {showPreRequest && (
+      {activeTab === 'prerequest' && (
         <div className="flex-1 border-t border-gray-200 dark:border-gray-800 flex flex-col min-h-0">
           <div className="p-2 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
             <span className="text-xs text-gray-500 dark:text-gray-400">Pre-request Script</span>
@@ -866,7 +872,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         </div>
       )}
 
-      {showTests && (
+      {activeTab === 'tests' && (
         <div className="flex-1 border-t border-gray-200 dark:border-gray-800 flex flex-col min-h-0">
           <div className="p-2 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
             <span className="text-xs text-gray-500 dark:text-gray-400">Tests (Post-response Script)</span>
@@ -893,7 +899,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         </div>
       )}
 
-      {showVariables && (
+      {activeTab === 'variables' && (
         <div className="border-t border-gray-200 dark:border-gray-800 h-96 flex flex-col min-h-0">
           <VariablesPanel />
         </div>
@@ -950,7 +956,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         </div>
       )}
 
-      {!showHeaders && !showBody && !showPreRequest && !showTests && !showVariables && (
+      {!activeTab && (
         <div className="p-4 text-xs text-gray-500 dark:text-gray-400 mt-auto space-y-2">
           <div>
             <p className="font-semibold mb-1">Quick Keyboard Shortcuts:</p>
