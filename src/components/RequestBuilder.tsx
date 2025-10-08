@@ -64,8 +64,63 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const isLoadingTabData = useRef(false);
   const collections = useLiveQuery(() => db.collections.toArray());
 
+  // WebSocket panel resize state
+  const [websocketHeight, setWebsocketHeight] = useState(500); // Default 500px
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartY = useRef(0);
+  const resizeStartHeight = useRef(0);
+
   // Derived state - must be before hooks that use it
   const hasBody = METHODS_WITH_BODY.includes(method);
+
+  // Load saved WebSocket panel height from localStorage
+  useEffect(() => {
+    const savedHeight = localStorage.getItem('restbolt-websocket-height');
+    if (savedHeight) {
+      const height = parseInt(savedHeight, 10);
+      if (height >= 300 && height <= window.innerHeight * 0.9) {
+        setWebsocketHeight(height);
+      }
+    }
+  }, []);
+
+  // Handle WebSocket panel resize
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+    resizeStartY.current = e.clientY;
+    resizeStartHeight.current = websocketHeight;
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = resizeStartY.current - e.clientY;
+      const newHeight = resizeStartHeight.current + deltaY;
+      
+      // Constrain height: min 300px, max 90vh
+      const minHeight = 300;
+      const maxHeight = window.innerHeight * 0.9;
+      const constrainedHeight = Math.max(minHeight, Math.min(maxHeight, newHeight));
+      
+      setWebsocketHeight(constrainedHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+      // Save height to localStorage
+      localStorage.setItem('restbolt-websocket-height', websocketHeight.toString());
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, websocketHeight]);
 
   // Keyboard shortcuts
   useHotkeys('ctrl+enter, meta+enter', (e) => {
@@ -925,8 +980,23 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       )}
 
       {activeTab === 'websocket' && (
-        <div className="border-t border-gray-200 dark:border-gray-800 h-[calc(100vh-400px)] flex flex-col min-h-0">
-          <WebSocketPanel />
+        <div className="border-t border-gray-200 dark:border-gray-800 flex flex-col min-h-0" style={{ height: `${websocketHeight}px` }}>
+          {/* Resize Handle */}
+          <div
+            onMouseDown={handleResizeStart}
+            className={`flex-shrink-0 h-1.5 bg-gray-200 dark:bg-gray-800 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-ns-resize transition-colors relative group ${
+              isResizing ? 'bg-blue-500 dark:bg-blue-600' : ''
+            }`}
+            title="Drag to resize"
+          >
+            {/* Visual indicator */}
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="w-12 h-0.5 bg-white dark:bg-gray-900 rounded-full"></div>
+            </div>
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <WebSocketPanel />
+          </div>
         </div>
       )}
 
