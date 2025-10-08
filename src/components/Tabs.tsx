@@ -2,12 +2,45 @@
 
 import { useState } from 'react';
 import { useStore } from '@/lib/store';
+import { useHotkeys } from 'react-hotkeys-hook';
 import ConfirmDialog from './ConfirmDialog';
 
 export default function Tabs() {
   const { tabs, activeTabId, addTab, closeTab, setActiveTab } = useStore();
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [tabToClose, setTabToClose] = useState<string | null>(null);
+
+  // Keyboard shortcuts for tabs
+  // Ctrl/Cmd+T - New tab
+  useHotkeys('ctrl+t, meta+t', (e) => {
+    e.preventDefault();
+    addTab();
+  });
+
+  // Ctrl/Cmd+W - Close current tab
+  useHotkeys('ctrl+w, meta+w', (e) => {
+    e.preventDefault();
+    if (activeTabId) {
+      const tab = tabs.find(t => t.id === activeTabId);
+      if (tab?.isDirty) {
+        setTabToClose(activeTabId);
+        setShowCloseConfirm(true);
+      } else {
+        closeTab(activeTabId);
+      }
+    }
+  });
+
+  // Ctrl/Cmd+1-9 - Switch to tab by number
+  useHotkeys('ctrl+1, meta+1', (e) => { e.preventDefault(); tabs[0] && setActiveTab(tabs[0].id); });
+  useHotkeys('ctrl+2, meta+2', (e) => { e.preventDefault(); tabs[1] && setActiveTab(tabs[1].id); });
+  useHotkeys('ctrl+3, meta+3', (e) => { e.preventDefault(); tabs[2] && setActiveTab(tabs[2].id); });
+  useHotkeys('ctrl+4, meta+4', (e) => { e.preventDefault(); tabs[3] && setActiveTab(tabs[3].id); });
+  useHotkeys('ctrl+5, meta+5', (e) => { e.preventDefault(); tabs[4] && setActiveTab(tabs[4].id); });
+  useHotkeys('ctrl+6, meta+6', (e) => { e.preventDefault(); tabs[5] && setActiveTab(tabs[5].id); });
+  useHotkeys('ctrl+7, meta+7', (e) => { e.preventDefault(); tabs[6] && setActiveTab(tabs[6].id); });
+  useHotkeys('ctrl+8, meta+8', (e) => { e.preventDefault(); tabs[7] && setActiveTab(tabs[7].id); });
+  useHotkeys('ctrl+9, meta+9', (e) => { e.preventDefault(); tabs[8] && setActiveTab(tabs[8].id); });
 
   const handleCloseTab = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();

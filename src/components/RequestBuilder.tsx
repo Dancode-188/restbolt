@@ -717,11 +717,15 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       {!showHeaders && !showBody && (
         <div className="p-4 text-xs text-gray-500 dark:text-gray-400 mt-auto space-y-2">
           <div>
-            <p className="font-semibold mb-1">Keyboard Shortcuts:</p>
-            <p>⌘/Ctrl + Enter - Send request</p>
-            <p>⌘/Ctrl + K - Focus URL bar</p>
-            <p>⌘/Ctrl + H - Toggle headers</p>
-            <p>⌘/Ctrl + / - Toggle body</p>
+            <p className="font-semibold mb-1">Quick Keyboard Shortcuts:</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              <p>⌘/Ctrl + Enter → Send request</p>
+              <p>⌘/Ctrl + K → Focus URL bar</p>
+              <p>⌘/Ctrl + T → New tab</p>
+              <p>⌘/Ctrl + W → Close tab</p>
+              <p>⌘/Ctrl + B → Toggle sidebar</p>
+              <p>⌘/Ctrl + ? → Show all shortcuts</p>
+            </div>
           </div>
           <p className="pt-2 border-t border-gray-200 dark:border-gray-700">Try POST to https://jsonplaceholder.typicode.com/posts</p>
         </div>
