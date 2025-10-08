@@ -12,6 +12,7 @@ import Editor from '@monaco-editor/react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
+import CodeGenerationModal from './CodeGenerationModal';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
 const METHODS_WITH_BODY = ['POST', 'PUT', 'PATCH'];
@@ -51,6 +52,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const [showBody, setShowBody] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [showAuthHelper, setShowAuthHelper] = useState(false);
+  const [showCodeGen, setShowCodeGen] = useState(false);
   const [requestName, setRequestName] = useState('');
   
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -361,6 +363,18 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
             className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
           >
             {loading ? 'Sending...' : 'Send'}
+          </button>
+          
+          <button
+            onClick={() => setShowCodeGen(true)}
+            disabled={!url.trim()}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            title="Generate code"
+          >
+            <svg className="w-4 h-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            Code
           </button>
           
           <button
@@ -730,6 +744,16 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
           <p className="pt-2 border-t border-gray-200 dark:border-gray-700">Try POST to https://jsonplaceholder.typicode.com/posts</p>
         </div>
       )}
+
+      {/* Code Generation Modal */}
+      <CodeGenerationModal
+        isOpen={showCodeGen}
+        onClose={() => setShowCodeGen(false)}
+        method={method}
+        url={url}
+        headers={headers}
+        body={body}
+      />
     </div>
   );
 }
