@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Editor from '@monaco-editor/react';
 import { codeGenerationService, CodeLanguage } from '@/lib/code-generation-service';
 import { useStore } from '@/lib/store';
@@ -68,7 +69,10 @@ export default function CodeGenerationModal({
     }
   };
 
-  return (
+  // Use portal to render modal at document root level to avoid clipping issues
+  if (typeof document === 'undefined') return null;
+
+  const modalContent = (
     <div 
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" 
       onClick={onClose}
@@ -161,4 +165,6 @@ export default function CodeGenerationModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
