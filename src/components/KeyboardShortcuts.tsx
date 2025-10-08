@@ -21,8 +21,8 @@ export default function KeyboardShortcuts({ isOpen, onClose }: ShortcutsModalPro
     {
       category: 'Tab Management',
       items: [
-        { keys: ['⌘/Ctrl', 'T'], description: 'New tab' },
-        { keys: ['⌘/Ctrl', 'W'], description: 'Close current tab' },
+        { keys: ['Alt', 'T'], description: 'New tab' },
+        { keys: ['Alt', 'W'], description: 'Close current tab' },
         { keys: ['⌘/Ctrl', '1-9'], description: 'Switch to tab 1-9' },
       ],
     },

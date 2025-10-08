@@ -11,14 +11,14 @@ export default function Tabs() {
   const [tabToClose, setTabToClose] = useState<string | null>(null);
 
   // Keyboard shortcuts for tabs
-  // Ctrl/Cmd+T - New tab
-  useHotkeys('ctrl+t, meta+t', (e) => {
+  // Alt+T - New tab (avoiding browser Ctrl+T conflict)
+  useHotkeys('alt+t', (e) => {
     e.preventDefault();
     addTab();
   });
 
-  // Ctrl/Cmd+W - Close current tab
-  useHotkeys('ctrl+w, meta+w', (e) => {
+  // Alt+W - Close current tab (avoiding browser Ctrl+W conflict)
+  useHotkeys('alt+w', (e) => {
     e.preventDefault();
     if (activeTabId) {
       const tab = tabs.find(t => t.id === activeTabId);
