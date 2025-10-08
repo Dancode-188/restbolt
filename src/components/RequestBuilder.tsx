@@ -925,7 +925,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       )}
 
       {activeTab === 'websocket' && (
-        <div className="border-t border-gray-200 dark:border-gray-800 h-96 flex flex-col min-h-0">
+        <div className="border-t border-gray-200 dark:border-gray-800 h-[600px] flex flex-col min-h-0">
           <WebSocketPanel />
         </div>
       )}
