@@ -129,63 +129,63 @@ export default function VariablesPanel() {
         </div>
       </div>
 
-      {/* Add New Variable Form */}
-      {showAddNew && (
-        <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-blue-50 dark:bg-blue-900/10">
-          <h4 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            Add New Variable
-          </h4>
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="Variable name"
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAddNew();
-                }
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Variable value (strings, numbers, or JSON)"
-              value={newValue}
-              onChange={(e) => setNewValue(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleAddNew();
-                }
-              }}
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={handleAddNew}
-                className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-              >
-                Add
-              </button>
-              <button
-                onClick={() => {
-                  setShowAddNew(false);
-                  setNewKey('');
-                  setNewValue('');
-                }}
-                className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Variables List */}
       <div className="flex-1 overflow-auto">
+        {/* Add New Variable Form - Now inside scrollable area */}
+        {showAddNew && (
+          <div className="p-4 border-b border-gray-200 dark:border-gray-800 bg-blue-50 dark:bg-blue-900/10">
+            <h4 className="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              Add New Variable
+            </h4>
+            <div className="space-y-2">
+              <input
+                type="text"
+                placeholder="Variable name"
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddNew();
+                  }
+                }}
+              />
+              <input
+                type="text"
+                placeholder="Variable value (strings, numbers, or JSON)"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleAddNew();
+                  }
+                }}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddNew}
+                  className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Add
+                </button>
+                <button
+                  onClick={() => {
+                    setShowAddNew(false);
+                    setNewKey('');
+                    setNewValue('');
+                  }}
+                  className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {variablesArray.length === 0 ? (
           <div className="p-8 text-center">
             <svg
