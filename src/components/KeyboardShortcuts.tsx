@@ -30,7 +30,7 @@ export default function KeyboardShortcuts({ isOpen, onClose }: ShortcutsModalPro
       category: 'Navigation',
       items: [
         { keys: ['⌘/Ctrl', 'B'], description: 'Toggle sidebar' },
-        { keys: ['⌘/Ctrl', '?'], description: 'Show this help' },
+        { keys: ['⌘/Ctrl', 'Shift', '/'], description: 'Show this help' },
       ],
     },
   ];

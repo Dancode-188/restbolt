@@ -721,10 +721,10 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               <p>⌘/Ctrl + Enter → Send request</p>
               <p>⌘/Ctrl + K → Focus URL bar</p>
-              <p>⌘/Ctrl + T → New tab</p>
-              <p>⌘/Ctrl + W → Close tab</p>
+              <p>Alt + T → New tab</p>
+              <p>Alt + W → Close tab</p>
               <p>⌘/Ctrl + B → Toggle sidebar</p>
-              <p>⌘/Ctrl + ? → Show all shortcuts</p>
+              <p>⌘/Ctrl + Shift + / → Show all shortcuts</p>
             </div>
           </div>
           <p className="pt-2 border-t border-gray-200 dark:border-gray-700">Try POST to https://jsonplaceholder.typicode.com/posts</p>

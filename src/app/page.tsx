@@ -27,11 +27,12 @@ export default function Home() {
     setSidebarCollapsed(prev => !prev);
   });
 
-  // Ctrl/Cmd+? or Ctrl/Cmd+Shift+/ - Show keyboard shortcuts
-  useHotkeys('ctrl+shift+/, meta+shift+/', (e) => {
+  // Ctrl/Cmd+Shift+/ - Show keyboard shortcuts
+  // Also adding Ctrl+Shift+? as alternative
+  useHotkeys(['ctrl+shift+/', 'meta+shift+/', 'ctrl+shift+?', 'meta+shift+?', 'ctrl+?', 'meta+?'], (e) => {
     e.preventDefault();
     setShowShortcuts(true);
-  });
+  }, { enableOnFormTags: true });
 
   // Esc - Close modals
   useHotkeys('esc', (e) => {
