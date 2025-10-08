@@ -13,6 +13,8 @@ import { useHotkeys } from 'react-hotkeys-hook';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import CodeGenerationModal from './CodeGenerationModal';
+import VariablesPanel from './VariablesPanel';
+import { scriptingService, ScriptResult } from '@/lib/scripting-service';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
 const METHODS_WITH_BODY = ['POST', 'PUT', 'PATCH'];
@@ -54,6 +56,12 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const [showAuthHelper, setShowAuthHelper] = useState(false);
   const [showCodeGen, setShowCodeGen] = useState(false);
   const [requestName, setRequestName] = useState('');
+  const [preRequestScript, setPreRequestScript] = useState('');
+  const [testScript, setTestScript] = useState('');
+  const [showPreRequest, setShowPreRequest] = useState(false);
+  const [showTests, setShowTests] = useState(false);
+  const [showVariables, setShowVariables] = useState(false);
+  const [scriptResult, setScriptResult] = useState<ScriptResult | null>(null);
   
   const urlInputRef = useRef<HTMLInputElement>(null);
   const isLoadingTabData = useRef(false);
@@ -231,26 +239,55 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
     if (!url.trim()) return;
     setLoading(true);
     setError(null);
+    setScriptResult(null);
     
     try {
       // Get active environment for variable replacement
       const activeEnv = await environmentService.getActiveEnvironment();
       const envVars = activeEnv?.variables || {};
 
-      // Replace variables in URL
-      const processedUrl = environmentService.replaceVariables(url.trim(), envVars);
+      // Prepare request context
+      const headersForScript = headers
+        .filter(h => h.enabled && h.key.trim())
+        .reduce((acc, h) => ({ ...acc, [h.key.trim()]: h.value }), {});
+
+      // Execute pre-request script if present
+      if (preRequestScript.trim()) {
+        const preRequestResult = await scriptingService.executePreRequestScript(
+          preRequestScript,
+          {
+            url: url.trim(),
+            method,
+            headers: headersForScript,
+            body: METHODS_WITH_BODY.includes(method) ? body : undefined,
+          },
+          envVars
+        );
+
+        if (!preRequestResult.success) {
+          setScriptResult(preRequestResult);
+          setError(`Pre-request script error: ${preRequestResult.error}`);
+          setLoading(false);
+          return;
+        }
+
+        setScriptResult(preRequestResult);
+      }
+
+      // Replace variables in URL (from both environment and script variables)
+      let processedUrl = scriptingService.interpolateVariables(url.trim(), envVars);
 
       // Replace variables in headers
       const headersObject = headers
         .filter(h => h.enabled && h.key.trim())
         .reduce((acc, h) => ({ 
           ...acc, 
-          [h.key.trim()]: environmentService.replaceVariables(h.value, envVars)
+          [h.key.trim()]: scriptingService.interpolateVariables(h.value, envVars)
         }), {});
 
       // Replace variables in body
       const processedBody = METHODS_WITH_BODY.includes(method) 
-        ? environmentService.replaceVariables(body, envVars)
+        ? scriptingService.interpolateVariables(body, envVars)
         : undefined;
 
       const startTime = performance.now();
@@ -273,6 +310,29 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         time: responseTime,
         size: responseSize,
       });
+
+      // Execute post-response script (tests) if present
+      if (testScript.trim()) {
+        const testResult = await scriptingService.executePostResponseScript(
+          testScript,
+          {
+            url: processedUrl,
+            method,
+            headers: headersObject,
+            body: processedBody,
+          },
+          {
+            status: result.status,
+            statusText: result.statusText,
+            headers: result.headers,
+            body: result.data,
+            time: responseTime,
+          },
+          envVars
+        );
+
+        setScriptResult(testResult);
+      }
 
       // Save to history with original values (including variables)
       await historyService.addToHistory({
@@ -630,6 +690,51 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
             Body
           </button>
         )}
+
+        <button
+          onClick={() => setShowPreRequest(!showPreRequest)}
+          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${showPreRequest ? 'rotate-90' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          Pre-request Script
+        </button>
+
+        <button
+          onClick={() => setShowTests(!showTests)}
+          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${showTests ? 'rotate-90' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          Tests
+        </button>
+
+        <button
+          onClick={() => setShowVariables(!showVariables)}
+          className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${showVariables ? 'rotate-90' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+          Variables
+        </button>
       </div>
 
       {showHeaders && (
@@ -734,7 +839,118 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         </div>
       )}
 
-      {!showHeaders && !showBody && (
+      {showPreRequest && (
+        <div className="flex-1 border-t border-gray-200 dark:border-gray-800 flex flex-col min-h-0">
+          <div className="p-2 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Pre-request Script</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">JavaScript</span>
+          </div>
+          <div className="flex-1 min-h-0">
+            <Editor
+              height="100%"
+              language="javascript"
+              value={preRequestScript}
+              onChange={(value) => setPreRequestScript(value || '')}
+              theme={theme === 'dark' ? 'vs-dark' : 'light'}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                automaticLayout: true,
+                tabSize: 2,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {showTests && (
+        <div className="flex-1 border-t border-gray-200 dark:border-gray-800 flex flex-col min-h-0">
+          <div className="p-2 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+            <span className="text-xs text-gray-500 dark:text-gray-400">Tests (Post-response Script)</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">JavaScript</span>
+          </div>
+          <div className="flex-1 min-h-0">
+            <Editor
+              height="100%"
+              language="javascript"
+              value={testScript}
+              onChange={(value) => setTestScript(value || '')}
+              theme={theme === 'dark' ? 'vs-dark' : 'light'}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                automaticLayout: true,
+                tabSize: 2,
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {showVariables && (
+        <div className="flex-1 border-t border-gray-200 dark:border-gray-800 flex flex-col min-h-0 max-h-96">
+          <VariablesPanel />
+        </div>
+      )}
+
+      {/* Script Console - Show when there are script results */}
+      {scriptResult && scriptResult.logs.length > 0 && (
+        <div className="border-t border-gray-200 dark:border-gray-800">
+          <div className="p-4 space-y-2 max-h-48 overflow-auto bg-gray-50 dark:bg-gray-900/50">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Console Output</h4>
+              <button
+                onClick={() => setScriptResult(null)}
+                className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                Clear
+              </button>
+            </div>
+            {scriptResult.logs.map((log, index) => (
+              <div
+                key={index}
+                className={`text-xs font-mono px-2 py-1 rounded ${
+                  log.type === 'error'
+                    ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20'
+                    : log.type === 'warn'
+                    ? 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20'
+                    : 'text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800'
+                }`}
+              >
+                [{log.type}] {log.message}
+              </div>
+            ))}
+            
+            {/* Show test results if present */}
+            {scriptResult.tests && Object.keys(scriptResult.tests).length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Test Results</h4>
+                {Object.entries(scriptResult.tests).map(([testName, passed]) => (
+                  <div
+                    key={testName}
+                    className={`text-xs px-2 py-1 rounded mb-1 flex items-center gap-2 ${
+                      passed
+                        ? 'text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20'
+                        : 'text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20'
+                    }`}
+                  >
+                    <span>{passed ? '✓' : '✗'}</span>
+                    <span>{testName}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!showHeaders && !showBody && !showPreRequest && !showTests && !showVariables && (
         <div className="p-4 text-xs text-gray-500 dark:text-gray-400 mt-auto space-y-2">
           <div>
             <p className="font-semibold mb-1">Quick Keyboard Shortcuts:</p>
