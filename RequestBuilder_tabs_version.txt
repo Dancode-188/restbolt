@@ -63,9 +63,6 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const isLoadingTabData = useRef(false);
   const collections = useLiveQuery(() => db.collections.toArray());
 
-  // Derived state - must be before hooks that use it
-  const hasBody = METHODS_WITH_BODY.includes(method);
-
   // Keyboard shortcuts
   useHotkeys('ctrl+enter, meta+enter', (e) => {
     e.preventDefault();
@@ -412,6 +409,8 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
     setRequestName('');
   };
 
+  const hasBody = METHODS_WITH_BODY.includes(method);
+
   return (
     <div className="h-full bg-white dark:bg-gray-950 flex flex-col">
       <div className="p-4 space-y-4 flex-shrink-0">
@@ -561,7 +560,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
               </button>
             </div>
 
-            <div className="space-y-3 max-h-64 overflow-y-auto">
+            <div className="space-y-3 max-h-96 overflow-y-auto">
               {/* Bearer Token */}
               <div className="border border-gray-200 dark:border-gray-700 rounded p-3 space-y-2">
                 <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">Bearer Token</h4>
@@ -742,7 +741,6 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
             Variables {scriptingService.getAllVariables().size > 0 && `(${scriptingService.getAllVariables().size})`}
           </button>
         </div>
-      </div>
 
       {/* Tab Content */}
       {activeTab === 'headers' && (
