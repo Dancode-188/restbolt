@@ -56,6 +56,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const [requestName, setRequestName] = useState('');
   
   const urlInputRef = useRef<HTMLInputElement>(null);
+  const isLoadingTabData = useRef(false);
   const collections = useLiveQuery(() => db.collections.toArray());
 
   // Keyboard shortcuts
@@ -87,17 +88,22 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
     if (activeTabId) {
       const activeTab = tabs.find(t => t.id === activeTabId);
       if (activeTab) {
+        isLoadingTabData.current = true;
         setMethod(activeTab.method as typeof HTTP_METHODS[number]);
         setUrl(activeTab.url);
         setHeaders(activeTab.headers);
         setBody(activeTab.body);
+        // Reset the flag after state updates are scheduled
+        setTimeout(() => {
+          isLoadingTabData.current = false;
+        }, 0);
       }
     }
   }, [activeTabId, tabs]);
 
-  // Sync tab state when form data changes
+  // Sync tab state when form data changes (but not when loading tab data)
   useEffect(() => {
-    if (activeTabId && !selectedHistoryItem && !selectedRequest) {
+    if (activeTabId && !selectedHistoryItem && !selectedRequest && !isLoadingTabData.current) {
       const activeTab = tabs.find(t => t.id === activeTabId);
       // Only update if data actually changed
       if (activeTab && (
@@ -115,7 +121,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         });
       }
     }
-  }, [method, url, headers, body, activeTabId, tabs, selectedHistoryItem, selectedRequest, updateTab]);
+  }, [method, url, headers, body, activeTabId, selectedHistoryItem, selectedRequest, updateTab, tabs]);
 
   // Load history item into form when selected
   useEffect(() => {
