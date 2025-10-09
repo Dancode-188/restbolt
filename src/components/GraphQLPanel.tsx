@@ -5,63 +5,65 @@ import { graphqlService, GraphQLExecutionResult } from '@/lib/graphql-service';
 import { useStore } from '@/lib/store';
 import Editor from '@monaco-editor/react';
 
-const DEFAULT_QUERY = `query GetUser($id: ID!) {
-  user(id: $id) {
-    id
+const DEFAULT_QUERY = `query {
+  countries {
+    code
     name
-    email
+    emoji
+    capital
   }
 }`;
 
-const DEFAULT_VARIABLES = `{
-  "id": "1"
-}`;
+const DEFAULT_VARIABLES = `{}`;
 
 const EXAMPLE_QUERIES = [
   {
     name: 'Simple Query',
-    query: `{
-  users {
-    id
+    query: `query {
+  countries {
+    code
     name
+    emoji
   }
 }`,
     variables: '{}',
   },
   {
     name: 'Query with Variables',
-    query: `query GetUser($id: ID!) {
-  user(id: $id) {
-    id
+    query: `query GetCountry($code: ID!) {
+  country(code: $code) {
+    code
     name
-    email
+    capital
+    currency
+    emoji
   }
 }`,
     variables: `{
-  "id": "1"
+  "code": "US"
 }`,
   },
   {
-    name: 'Mutation',
-    query: `mutation CreateUser($input: CreateUserInput!) {
-  createUser(input: $input) {
-    id
+    name: 'Complex Query',
+    query: `query {
+  continents {
+    code
     name
-    email
+    countries {
+      code
+      name
+      capital
+      emoji
+    }
   }
 }`,
-    variables: `{
-  "input": {
-    "name": "John Doe",
-    "email": "john@example.com"
-  }
-}`,
+    variables: '{}',
   },
 ];
 
 export default function GraphQLPanel() {
   const { theme } = useStore();
-  const [endpoint, setEndpoint] = useState('https://api.spacex.land/graphql/');
+  const [endpoint, setEndpoint] = useState('https://countries.trevorblades.com/');
   const [query, setQuery] = useState(DEFAULT_QUERY);
   const [variables, setVariables] = useState(DEFAULT_VARIABLES);
   const [headers, setHeaders] = useState('{}');
@@ -157,7 +159,7 @@ export default function GraphQLPanel() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-950 overflow-hidden">
       {/* Header Section */}
       <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-800 space-y-3">
         {/* Endpoint & Execute */}
@@ -233,7 +235,7 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Query Editor - FIXED: Now has minimum height of 300px */}
+      {/* Query Editor */}
       <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '300px' }}>
         <div className="flex-shrink-0 px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Query</h3>
@@ -258,7 +260,7 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Variables Section - Reduced to 150px */}
+      {/* Variables Section */}
       {showVariables && (
         <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '150px' }}>
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
@@ -285,7 +287,7 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Headers Section - Reduced to 150px */}
+      {/* Headers Section */}
       {showHeaders && (
         <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '150px' }}>
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
@@ -312,8 +314,8 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Response Section - FIXED: Now properly scrollable */}
-      <div className="flex-1 min-h-0 border-t border-gray-200 dark:border-gray-800 flex flex-col">
+      {/* Response Section - FIXED with explicit overflow-y-auto */}
+      <div className="flex-1 min-h-0 border-t border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden">
         <div className="flex-shrink-0 px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Response</h3>
           {result && (
@@ -323,10 +325,10 @@ export default function GraphQLPanel() {
             </span>
           )}
         </div>
-        {/* FIXED: Added flex-1 and min-h-0 to make this scrollable */}
-        <div className="flex-1 min-h-0 overflow-auto p-4">
+        {/* FIXED: explicit overflow-y-auto and proper flex setup */}
+        <div className="flex-1 overflow-y-auto p-4">
           {!result ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="flex flex-col items-center justify-center min-h-full text-center py-8">
               <svg
                 className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4"
                 fill="none"
