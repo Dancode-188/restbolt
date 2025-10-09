@@ -69,13 +69,10 @@ export default function GraphQLPanel() {
   const [headers, setHeaders] = useState('{}');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GraphQLExecutionResult | null>(null);
-  const [showVariables, setShowVariables] = useState(true);
+  const [showVariables, setShowVariables] = useState(false);
   const [showHeaders, setShowHeaders] = useState(false);
-  const [exampleLoaded, setExampleLoaded] = useState<string | null>(null);
 
   const handleExecute = async () => {
-    console.log('🚀 Execute button clicked!');
-    
     const queryValidation = graphqlService.validateQuery(query);
     if (!queryValidation.valid) {
       setResult({ error: queryValidation.error, duration: 0 });
@@ -98,7 +95,6 @@ export default function GraphQLPanel() {
       }
     }
 
-    console.log('✅ All validations passed, executing query...');
     setLoading(true);
     setResult(null);
 
@@ -109,10 +105,8 @@ export default function GraphQLPanel() {
         variables: variablesValidation.parsed,
         headers: parsedHeaders,
       });
-      console.log('✅ Query executed, result:', executionResult);
       setResult(executionResult);
     } catch (error: any) {
-      console.error('❌ Execution error:', error);
       setResult({ error: `Execution failed: ${error.message}`, duration: 0 });
     } finally {
       setLoading(false);
@@ -120,11 +114,8 @@ export default function GraphQLPanel() {
   };
 
   const loadExample = (example: typeof EXAMPLE_QUERIES[0]) => {
-    console.log('📝 Loading example:', example.name);
     setQuery(example.query);
     setVariables(example.variables);
-    setExampleLoaded(example.name);
-    setTimeout(() => setExampleLoaded(null), 2000);
   };
 
   const formatJSON = (data: any): string => {
@@ -137,69 +128,61 @@ export default function GraphQLPanel() {
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-      {/* Header Controls */}
-      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-800 space-y-3">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={endpoint}
-            onChange={(e) => setEndpoint(e.target.value)}
-            placeholder="https://api.example.com/graphql"
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !loading) handleExecute();
-            }}
-          />
-          <button
-            onClick={handleExecute}
-            disabled={loading || !endpoint.trim()}
-            className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-          >
-            {loading ? 'Executing...' : 'Execute'}
-          </button>
-        </div>
+      {/* Compact Header - Endpoint + Execute */}
+      <div className="flex-shrink-0 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800 flex gap-2">
+        <input
+          type="text"
+          value={endpoint}
+          onChange={(e) => setEndpoint(e.target.value)}
+          placeholder="https://api.example.com/graphql"
+          className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !loading) handleExecute();
+          }}
+        />
+        <button
+          onClick={handleExecute}
+          disabled={loading || !endpoint.trim()}
+          className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? 'Executing...' : 'Execute'}
+        </button>
+      </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <select
-              onChange={(e) => {
-                if (e.target.value) {
-                  loadExample(EXAMPLE_QUERIES[parseInt(e.target.value)]);
-                  e.target.value = '';
-                }
-              }}
-              className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300"
-            >
-              <option value="">Load Example...</option>
-              {EXAMPLE_QUERIES.map((example, index) => (
-                <option key={index} value={index}>{example.name}</option>
-              ))}
-            </select>
-            {exampleLoaded && (
-              <span className="text-xs text-green-600 dark:text-green-400 animate-pulse">
-                ✓ Loaded: {exampleLoaded}
-              </span>
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
-              <input type="checkbox" checked={showVariables} onChange={(e) => setShowVariables(e.target.checked)} className="rounded" />
-              Variables
-            </label>
-            <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
-              <input type="checkbox" checked={showHeaders} onChange={(e) => setShowHeaders(e.target.checked)} className="rounded" />
-              Headers
-            </label>
-          </div>
+      {/* Compact Controls Row */}
+      <div className="flex-shrink-0 px-4 py-2 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <select
+          onChange={(e) => {
+            if (e.target.value) {
+              loadExample(EXAMPLE_QUERIES[parseInt(e.target.value)]);
+              e.target.value = '';
+            }
+          }}
+          className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300"
+        >
+          <option value="">Load Example...</option>
+          {EXAMPLE_QUERIES.map((example, index) => (
+            <option key={index} value={index}>{example.name}</option>
+          ))}
+        </select>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
+            <input type="checkbox" checked={showVariables} onChange={(e) => setShowVariables(e.target.checked)} className="rounded" />
+            Variables
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
+            <input type="checkbox" checked={showHeaders} onChange={(e) => setShowHeaders(e.target.checked)} className="rounded" />
+            Headers
+          </label>
         </div>
       </div>
 
-      {/* Query Editor */}
-      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '300px' }}>
-        <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
+      {/* Query Editor - Compact 200px */}
+      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '200px' }}>
+        <div className="px-4 py-1.5 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Query</h3>
         </div>
-        <div style={{ height: 'calc(100% - 36px)' }}>
+        <div style={{ height: 'calc(100% - 32px)' }}>
           <Editor
             height="100%"
             language="graphql"
@@ -208,7 +191,7 @@ export default function GraphQLPanel() {
             theme={theme === 'dark' ? 'vs-dark' : 'light'}
             options={{
               minimap: { enabled: false },
-              fontSize: 13,
+              fontSize: 12,
               lineNumbers: 'on',
               scrollBeyondLastLine: false,
               wordWrap: 'on',
@@ -219,13 +202,13 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Variables Editor */}
+      {/* Variables - Compact 120px */}
       {showVariables && (
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '150px' }}>
-          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '120px' }}>
+          <div className="px-4 py-1.5 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Variables (JSON)</h3>
           </div>
-          <div style={{ height: 'calc(100% - 36px)' }}>
+          <div style={{ height: 'calc(100% - 32px)' }}>
             <Editor
               height="100%"
               language="json"
@@ -234,7 +217,7 @@ export default function GraphQLPanel() {
               theme={theme === 'dark' ? 'vs-dark' : 'light'}
               options={{
                 minimap: { enabled: false },
-                fontSize: 13,
+                fontSize: 12,
                 lineNumbers: 'on',
                 scrollBeyondLastLine: false,
                 wordWrap: 'on',
@@ -246,13 +229,13 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Headers Editor */}
+      {/* Headers - Compact 120px */}
       {showHeaders && (
-        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '150px' }}>
-          <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '120px' }}>
+          <div className="px-4 py-1.5 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Headers (JSON)</h3>
           </div>
-          <div style={{ height: 'calc(100% - 36px)' }}>
+          <div style={{ height: 'calc(100% - 32px)' }}>
             <Editor
               height="100%"
               language="json"
@@ -261,7 +244,7 @@ export default function GraphQLPanel() {
               theme={theme === 'dark' ? 'vs-dark' : 'light'}
               options={{
                 minimap: { enabled: false },
-                fontSize: 13,
+                fontSize: 12,
                 lineNumbers: 'on',
                 scrollBeyondLastLine: false,
                 wordWrap: 'on',
@@ -273,7 +256,7 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Response Section - EXACT SAME AS WEBSOCKET */}
+      {/* Response Section - Takes remaining space with scrolling */}
       <div className="flex-1 overflow-auto p-4 space-y-2 min-h-0">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Response</h3>
@@ -285,13 +268,13 @@ export default function GraphQLPanel() {
         </div>
 
         {!result ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
+          <div className="flex flex-col items-center justify-center text-center py-12">
             <svg className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
             </svg>
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">No response yet</h4>
             <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
-              Click Execute above to send your GraphQL query and see the response here.
+              Click Execute above to send your GraphQL query
             </p>
           </div>
         ) : result.error ? (
