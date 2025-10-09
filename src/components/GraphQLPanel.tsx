@@ -143,9 +143,9 @@ export default function GraphQLPanel() {
   const responseHeight = 800 - headerHeight - queryHeight - variablesHeight - headersHeight;
 
   return (
-    <div className="h-full w-full bg-white dark:bg-gray-950" style={{ height: '800px' }}>
-      {/* Header Section - FIXED HEIGHT */}
-      <div style={{ height: `${headerHeight}px` }} className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 space-y-3">
+    <div style={{ height: '800px', display: 'flex', flexDirection: 'column' }} className="w-full bg-white dark:bg-gray-950">
+      {/* Header */}
+      <div style={{ height: `${headerHeight}px`, flexShrink: 0 }} className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 space-y-3">
         <div className="flex gap-2">
           <input
             type="text"
@@ -201,8 +201,8 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Query Editor - FIXED HEIGHT */}
-      <div style={{ height: `${queryHeight}px` }} className="border-b border-gray-200 dark:border-gray-800">
+      {/* Query */}
+      <div style={{ height: `${queryHeight}px`, flexShrink: 0 }} className="border-b border-gray-200 dark:border-gray-800">
         <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Query</h3>
         </div>
@@ -226,9 +226,9 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Variables Section - CONDITIONAL */}
+      {/* Variables */}
       {showVariables && (
-        <div style={{ height: `${variablesHeight}px` }} className="border-b border-gray-200 dark:border-gray-800">
+        <div style={{ height: `${variablesHeight}px`, flexShrink: 0 }} className="border-b border-gray-200 dark:border-gray-800">
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Variables (JSON)</h3>
           </div>
@@ -253,9 +253,9 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Headers Section - CONDITIONAL */}
+      {/* Headers */}
       {showHeaders && (
-        <div style={{ height: `${headersHeight}px` }} className="border-b border-gray-200 dark:border-gray-800">
+        <div style={{ height: `${headersHeight}px`, flexShrink: 0 }} className="border-b border-gray-200 dark:border-gray-800">
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Headers (JSON)</h3>
           </div>
@@ -280,9 +280,9 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Response Section - CALCULATED HEIGHT WITH FORCED SCROLL */}
-      <div style={{ height: `${responseHeight}px` }} className="border-t border-gray-200 dark:border-gray-800">
-        <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+      {/* Response - THIS MUST SCROLL */}
+      <div style={{ height: `${responseHeight}px`, flexShrink: 0, display: 'flex', flexDirection: 'column' }} className="border-t border-gray-200 dark:border-gray-800">
+        <div style={{ flexShrink: 0 }} className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Response</h3>
           {result && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -290,9 +290,12 @@ export default function GraphQLPanel() {
             </span>
           )}
         </div>
-        {/* THIS IS THE KEY: overflow-y-scroll with calculated height */}
         <div 
-          style={{ height: `${responseHeight - 36}px`, overflowY: 'scroll' }} 
+          style={{ 
+            flex: 1,
+            overflow: 'auto',
+            WebkitOverflowScrolling: 'touch'
+          }} 
           className="p-4 bg-white dark:bg-gray-950"
         >
           {!result ? (
@@ -302,7 +305,7 @@ export default function GraphQLPanel() {
               </svg>
               <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">No response yet</h4>
               <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
-                Click Execute to send your GraphQL query
+                Click Execute above to send your GraphQL query and see the response here. The response will be scrollable.
               </p>
             </div>
           ) : result.error ? (
@@ -335,7 +338,7 @@ export default function GraphQLPanel() {
             </div>
           ) : result.response?.data ? (
             <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
-              <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">Success</h4>
+              <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">Success ✓</h4>
               <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono">{formatJSON(result.response.data)}</pre>
             </div>
           ) : (
