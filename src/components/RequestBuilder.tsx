@@ -15,7 +15,6 @@ import { db } from '@/lib/db';
 import CodeGenerationModal from './CodeGenerationModal';
 import VariablesPanel from './VariablesPanel';
 import WebSocketPanel from './WebSocketPanel';
-import GraphQLPanel from './GraphQLPanel';
 import { scriptingService, ScriptResult } from '@/lib/scripting-service';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
@@ -58,7 +57,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   const [requestName, setRequestName] = useState('');
   const [preRequestScript, setPreRequestScript] = useState('');
   const [testScript, setTestScript] = useState('');
-  const [activeTab, setActiveTab] = useState<'headers' | 'body' | 'prerequest' | 'tests' | 'variables' | 'websocket' | 'graphql' | null>(null);
+  const [activeTab, setActiveTab] = useState<'headers' | 'body' | 'prerequest' | 'tests' | 'variables' | 'websocket' | null>(null);
   const [scriptResult, setScriptResult] = useState<ScriptResult | null>(null);
   
   const urlInputRef = useRef<HTMLInputElement>(null);
@@ -176,11 +175,6 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
   useHotkeys('ctrl+6, meta+6', (e) => {
     e.preventDefault();
     setActiveTab('websocket');
-  });
-
-  useHotkeys('ctrl+7, meta+7', (e) => {
-    e.preventDefault();
-    setActiveTab('graphql');
   });
 
   // Load active tab data
@@ -819,17 +813,6 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
           >
             WebSocket
           </button>
-
-          <button
-            onClick={() => setActiveTab(activeTab === 'graphql' ? null : 'graphql')}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === 'graphql'
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-700'
-            }`}
-          >
-            GraphQL
-          </button>
         </div>
       </div>
 
@@ -1017,12 +1000,6 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         </div>
       )}
 
-      {activeTab === 'graphql' && (
-        <div className="border-t border-gray-200 dark:border-gray-800 h-[800px] overflow-hidden">
-          <GraphQLPanel />
-        </div>
-      )}
-
       {/* Script Console - Show when there are script results */}
       {scriptResult && scriptResult.logs.length > 0 && (
         <div className="border-t border-gray-200 dark:border-gray-800">
@@ -1085,7 +1062,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
               <p>Alt + W → Close tab</p>
               <p>⌘/Ctrl + B → Toggle sidebar</p>
               <p>⌘/Ctrl + Shift + / → Show all shortcuts</p>
-              <p>⌘/Ctrl + 1-7 → Switch tabs</p>
+              <p>⌘/Ctrl + 1-6 → Switch tabs</p>
             </div>
           </div>
           <p className="pt-2 border-t border-gray-200 dark:border-gray-700">Try POST to https://jsonplaceholder.typicode.com/posts</p>
