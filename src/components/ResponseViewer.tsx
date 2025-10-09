@@ -5,12 +5,18 @@ import { useStore } from '@/lib/store';
 import Editor from '@monaco-editor/react';
 import DiffViewer from './DiffViewer';
 import ComparisonSelector from './ComparisonSelector';
+import VariableExtractor from './VariableExtractor';
 
 export default function ResponseViewer() {
-  const { currentResponse, theme, comparisonMode, setComparisonMode } = useStore();
+  const { currentResponse, theme, comparisonMode, setComparisonMode, mergeChainVariables } = useStore();
+  const [activeTab, setActiveTab] = useState<'body' | 'headers' | 'variables'>('body');
   const [showHeaders, setShowHeaders] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [showComparisonSelector, setShowComparisonSelector] = useState(false);
+
+  const handleVariablesExtracted = (variables: Record<string, any>) => {
+    mergeChainVariables(variables);
+  };
 
   // Show DiffViewer if in comparison mode
   if (comparisonMode) {
@@ -119,12 +125,6 @@ export default function ResponseViewer() {
               Compare
             </button>
             <button
-              onClick={() => setShowHeaders(!showHeaders)}
-              className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-            >
-              Headers
-            </button>
-            <button
               onClick={handleCopy}
               className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors flex items-center gap-1.5"
             >
@@ -155,40 +155,87 @@ export default function ResponseViewer() {
             </button>
           </div>
         </div>
+      </div>
 
-        {/* Response Headers */}
-        {showHeaders && (
-          <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">Response Headers</h3>
-            <div className="space-y-1 max-h-40 overflow-y-auto">
+      {/* Tab Navigation */}
+      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+        <div className="flex items-center px-4">
+          <button
+            onClick={() => setActiveTab('body')}
+            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+              activeTab === 'body'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Body
+          </button>
+          <button
+            onClick={() => setActiveTab('headers')}
+            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+              activeTab === 'headers'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Headers
+          </button>
+          <button
+            onClick={() => setActiveTab('variables')}
+            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
+              activeTab === 'variables'
+                ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Variables
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 overflow-hidden">
+        {activeTab === 'body' && (
+          <Editor
+            height="100%"
+            language={getLanguage()}
+            value={getFormattedData()}
+            theme={theme === 'dark' ? 'vs-dark' : 'light'}
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              fontSize: 13,
+              lineNumbers: 'on',
+              scrollBeyondLastLine: false,
+              wordWrap: 'on',
+              automaticLayout: true,
+            }}
+          />
+        )}
+
+        {activeTab === 'headers' && (
+          <div className="h-full overflow-auto p-4">
+            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Response Headers</h3>
+            <div className="space-y-2">
               {Object.entries(currentResponse.headers).map(([key, value]) => (
-                <div key={key} className="flex text-xs">
-                  <span className="font-medium text-gray-600 dark:text-gray-400 min-w-[150px]">{key}:</span>
+                <div key={key} className="flex text-sm border-b border-gray-100 dark:border-gray-800 pb-2">
+                  <span className="font-medium text-gray-600 dark:text-gray-400 min-w-[200px]">{key}:</span>
                   <span className="text-gray-900 dark:text-gray-100 break-all">{String(value)}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
-      </div>
 
-      {/* Response body */}
-      <div className="flex-1 overflow-hidden">
-        <Editor
-          height="100%"
-          language={getLanguage()}
-          value={getFormattedData()}
-          theme={theme === 'dark' ? 'vs-dark' : 'light'}
-          options={{
-            readOnly: true,
-            minimap: { enabled: false },
-            fontSize: 13,
-            lineNumbers: 'on',
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-            automaticLayout: true,
-          }}
-        />
+        {activeTab === 'variables' && (
+          <VariableExtractor
+            response={currentResponse}
+            onExtract={handleVariablesExtracted}
+          />
+        )}
       </div>
 
       {/* Comparison Selector Modal */}

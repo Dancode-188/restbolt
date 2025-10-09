@@ -37,6 +37,9 @@ interface AppState {
   comparisonMode: boolean;
   comparisonResponse: Response | null;
   
+  // Request chaining
+  chainVariables: Record<string, any>;
+  
   // Actions
   addTab: () => void;
   closeTab: (id: string) => void;
@@ -54,6 +57,9 @@ interface AppState {
   toggleSidebar: () => void;
   setComparisonMode: (mode: boolean, response?: Response | null) => void;
   clearComparison: () => void;
+  setChainVariables: (variables: Record<string, any>) => void;
+  mergeChainVariables: (variables: Record<string, any>) => void;
+  clearChainVariables: () => void;
 }
 
 export const useStore = create<AppState>()(
@@ -80,6 +86,7 @@ export const useStore = create<AppState>()(
       sidebarCollapsed: false,
       comparisonMode: false,
       comparisonResponse: null,
+      chainVariables: {},
       
       // Tab actions
       addTab: () => set((state) => {
@@ -178,6 +185,17 @@ export const useStore = create<AppState>()(
     comparisonMode: false,
     comparisonResponse: null,
   }),
+  
+  setChainVariables: (variables) => set({ chainVariables: variables }),
+  
+  mergeChainVariables: (variables) => set((state) => ({
+    chainVariables: {
+      ...state.chainVariables,
+      ...variables,
+    },
+  })),
+  
+  clearChainVariables: () => set({ chainVariables: {} }),
 }),
   {
     name: 'restbolt-storage',
