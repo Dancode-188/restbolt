@@ -69,11 +69,18 @@ export default function GraphQLPanel() {
   const [result, setResult] = useState<GraphQLExecutionResult | null>(null);
   const [showVariables, setShowVariables] = useState(true);
   const [showHeaders, setShowHeaders] = useState(false);
+  const [exampleLoaded, setExampleLoaded] = useState<string | null>(null);
 
   const handleExecute = async () => {
+    console.log('🚀 Execute button clicked!');
+    console.log('Endpoint:', endpoint);
+    console.log('Query:', query);
+    console.log('Variables:', variables);
+
     // Validate query
     const queryValidation = graphqlService.validateQuery(query);
     if (!queryValidation.valid) {
+      console.error('❌ Query validation failed:', queryValidation.error);
       setResult({
         error: queryValidation.error,
         duration: 0,
@@ -84,6 +91,7 @@ export default function GraphQLPanel() {
     // Validate and parse variables
     const variablesValidation = graphqlService.validateVariables(variables);
     if (!variablesValidation.valid) {
+      console.error('❌ Variables validation failed:', variablesValidation.error);
       setResult({
         error: `Variables error: ${variablesValidation.error}`,
         duration: 0,
@@ -97,6 +105,7 @@ export default function GraphQLPanel() {
       try {
         parsedHeaders = JSON.parse(headers);
       } catch (error: any) {
+        console.error('❌ Headers validation failed:', error.message);
         setResult({
           error: `Headers error: ${error.message}`,
           duration: 0,
@@ -105,23 +114,38 @@ export default function GraphQLPanel() {
       }
     }
 
+    console.log('✅ All validations passed, executing query...');
     setLoading(true);
     setResult(null);
 
-    const executionResult = await graphqlService.executeQuery({
-      endpoint: endpoint.trim(),
-      query: query.trim(),
-      variables: variablesValidation.parsed,
-      headers: parsedHeaders,
-    });
+    try {
+      const executionResult = await graphqlService.executeQuery({
+        endpoint: endpoint.trim(),
+        query: query.trim(),
+        variables: variablesValidation.parsed,
+        headers: parsedHeaders,
+      });
 
-    setResult(executionResult);
-    setLoading(false);
+      console.log('✅ Query executed, result:', executionResult);
+      setResult(executionResult);
+    } catch (error: any) {
+      console.error('❌ Execution error:', error);
+      setResult({
+        error: `Execution failed: ${error.message}`,
+        duration: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadExample = (example: typeof EXAMPLE_QUERIES[0]) => {
+    console.log('📝 Loading example:', example.name);
     setQuery(example.query);
     setVariables(example.variables);
+    setExampleLoaded(example.name);
+    // Clear the notification after 2 seconds
+    setTimeout(() => setExampleLoaded(null), 2000);
   };
 
   const formatJSON = (data: any): string => {
@@ -179,6 +203,12 @@ export default function GraphQLPanel() {
                 </option>
               ))}
             </select>
+            {/* Example loaded notification */}
+            {exampleLoaded && (
+              <span className="text-xs text-green-600 dark:text-green-400 animate-pulse">
+                ✓ Loaded: {exampleLoaded}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
@@ -282,9 +312,9 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Response Section - Takes remaining space with flex-1 */}
-      <div className="flex-1 min-h-0 border-t border-gray-200 dark:border-gray-800">
-        <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+      {/* Response Section - FIXED: Now properly scrollable */}
+      <div className="flex-1 min-h-0 border-t border-gray-200 dark:border-gray-800 flex flex-col">
+        <div className="flex-shrink-0 px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Response</h3>
           {result && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -293,7 +323,8 @@ export default function GraphQLPanel() {
             </span>
           )}
         </div>
-        <div className="h-full overflow-auto p-4" style={{ height: 'calc(100% - 36px)' }}>
+        {/* FIXED: Added flex-1 and min-h-0 to make this scrollable */}
+        <div className="flex-1 min-h-0 overflow-auto p-4">
           {!result ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <svg
@@ -313,7 +344,7 @@ export default function GraphQLPanel() {
                 No response yet
               </h4>
               <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
-                Enter your GraphQL endpoint and query, then click Execute to see the response
+                Click Execute to send your GraphQL query and see the response here
               </p>
             </div>
           ) : result.error ? (
