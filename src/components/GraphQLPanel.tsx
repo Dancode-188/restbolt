@@ -203,12 +203,12 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Query Editor */}
-      <div className="flex-1 flex flex-col min-h-0">
+      {/* Query Editor - FIXED: Now has minimum height of 300px */}
+      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '300px' }}>
         <div className="flex-shrink-0 px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Query</h3>
         </div>
-        <div className="flex-1 min-h-0">
+        <div style={{ height: 'calc(100% - 36px)' }}>
           <Editor
             height="100%"
             language="graphql"
@@ -228,9 +228,9 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Variables Section */}
+      {/* Variables Section - Reduced to 150px */}
       {showVariables && (
-        <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800" style={{ height: '200px' }}>
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '150px' }}>
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Variables (JSON)</h3>
           </div>
@@ -255,9 +255,9 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Headers Section */}
+      {/* Headers Section - Reduced to 150px */}
       {showHeaders && (
-        <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800" style={{ height: '200px' }}>
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '150px' }}>
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Headers (JSON)</h3>
           </div>
@@ -281,8 +281,9 @@ export default function GraphQLPanel() {
           </div>
         </div>
       )}
-      {/* Response Section */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800" style={{ height: '300px' }}>
+
+      {/* Response Section - Takes remaining space with flex-1 */}
+      <div className="flex-1 min-h-0 border-t border-gray-200 dark:border-gray-800">
         <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Response</h3>
           {result && (
