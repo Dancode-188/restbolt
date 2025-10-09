@@ -293,6 +293,7 @@ export default function GraphQLPanel() {
         <div 
           style={{ 
             flex: 1,
+            minHeight: 0,
             overflow: 'auto',
             WebkitOverflowScrolling: 'touch'
           }} 
