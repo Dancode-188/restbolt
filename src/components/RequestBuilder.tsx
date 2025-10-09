@@ -1018,7 +1018,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       )}
 
       {activeTab === 'graphql' && (
-        <div className="border-t border-gray-200 dark:border-gray-800 h-[800px]">
+        <div className="border-t border-gray-200 dark:border-gray-800 h-[800px] overflow-hidden">
           <GraphQLPanel />
         </div>
       )}

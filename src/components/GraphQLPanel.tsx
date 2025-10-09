@@ -143,7 +143,7 @@ export default function GraphQLPanel() {
   const responseHeight = 800 - headerHeight - queryHeight - variablesHeight - headersHeight;
 
   return (
-    <div style={{ height: '800px', display: 'flex', flexDirection: 'column' }} className="w-full bg-white dark:bg-gray-950">
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }} className="w-full bg-white dark:bg-gray-950">
       {/* Header */}
       <div style={{ height: `${headerHeight}px`, flexShrink: 0 }} className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 space-y-3">
         <div className="flex gap-2">
