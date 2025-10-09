@@ -1,8 +1,9 @@
 import Dexie, { Table } from 'dexie';
-import { Request, Collection, Environment } from '@/types';
+import { Request, Collection, Environment, Response } from '@/types';
 
 export interface HistoryItem extends Request {
   timestamp: Date;
+  response?: Response;
 }
 
 export class RestBoltDB extends Dexie {

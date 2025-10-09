@@ -26,7 +26,7 @@ export default function ComparisonSelector({ isOpen, onClose, onSelect }: Compar
   const loadHistory = async () => {
     setLoading(true);
     try {
-      const items = await historyService.getAll();
+      const items = await historyService.getHistory(50);
       // Only include items with responses
       setHistory(items.filter(item => item.response));
     } catch (error) {

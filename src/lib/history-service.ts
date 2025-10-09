@@ -1,11 +1,12 @@
 import { db, HistoryItem } from './db';
-import { Request } from '@/types';
+import { Request, Response } from '@/types';
 
 export const historyService = {
-  async addToHistory(request: Request, response: { status: number; statusText: string }) {
+  async addToHistory(request: Request, response: Response) {
     const historyItem: HistoryItem = {
       ...request,
       timestamp: new Date(),
+      response: response,
     };
     
     await db.history.add(historyItem);

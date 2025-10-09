@@ -436,6 +436,10 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       }, {
         status: result.status,
         statusText: result.statusText,
+        headers: result.headers,
+        data: result.data,
+        time: responseTime,
+        size: responseSize,
       });
 
       // Clear isDirty flag after successful send
