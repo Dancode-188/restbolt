@@ -135,17 +135,10 @@ export default function GraphQLPanel() {
     }
   };
 
-  // Calculate dynamic heights
-  const headerHeight = 120;
-  const queryHeight = 300;
-  const variablesHeight = showVariables ? 150 : 0;
-  const headersHeight = showHeaders ? 150 : 0;
-  const responseHeight = 800 - headerHeight - queryHeight - variablesHeight - headersHeight;
-
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }} className="w-full bg-white dark:bg-gray-950">
-      {/* Header */}
-      <div style={{ height: `${headerHeight}px`, flexShrink: 0 }} className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 space-y-3">
+    <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+      {/* Header Controls */}
+      <div className="flex-shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-800 space-y-3">
         <div className="flex gap-2">
           <input
             type="text"
@@ -201,12 +194,12 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Query */}
-      <div style={{ height: `${queryHeight}px`, flexShrink: 0 }} className="border-b border-gray-200 dark:border-gray-800">
+      {/* Query Editor */}
+      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '300px' }}>
         <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Query</h3>
         </div>
-        <div style={{ height: `${queryHeight - 36}px` }}>
+        <div style={{ height: 'calc(100% - 36px)' }}>
           <Editor
             height="100%"
             language="graphql"
@@ -226,13 +219,13 @@ export default function GraphQLPanel() {
         </div>
       </div>
 
-      {/* Variables */}
+      {/* Variables Editor */}
       {showVariables && (
-        <div style={{ height: `${variablesHeight}px`, flexShrink: 0 }} className="border-b border-gray-200 dark:border-gray-800">
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '150px' }}>
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Variables (JSON)</h3>
           </div>
-          <div style={{ height: `${variablesHeight - 36}px` }}>
+          <div style={{ height: 'calc(100% - 36px)' }}>
             <Editor
               height="100%"
               language="json"
@@ -253,13 +246,13 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Headers */}
+      {/* Headers Editor */}
       {showHeaders && (
-        <div style={{ height: `${headersHeight}px`, flexShrink: 0 }} className="border-b border-gray-200 dark:border-gray-800">
+        <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-800" style={{ height: '150px' }}>
           <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800">
             <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Headers (JSON)</h3>
           </div>
-          <div style={{ height: `${headersHeight - 36}px` }}>
+          <div style={{ height: 'calc(100% - 36px)' }}>
             <Editor
               height="100%"
               language="json"
@@ -280,9 +273,9 @@ export default function GraphQLPanel() {
         </div>
       )}
 
-      {/* Response - THIS MUST SCROLL */}
-      <div style={{ height: `${responseHeight}px`, flexShrink: 0, display: 'flex', flexDirection: 'column' }} className="border-t border-gray-200 dark:border-gray-800">
-        <div style={{ flexShrink: 0 }} className="px-4 py-2 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+      {/* Response Section - EXACT SAME AS WEBSOCKET */}
+      <div className="flex-1 overflow-auto p-4 space-y-2 min-h-0">
+        <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-semibold text-gray-700 dark:text-gray-300">Response</h3>
           {result && (
             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -290,64 +283,55 @@ export default function GraphQLPanel() {
             </span>
           )}
         </div>
-        <div 
-          style={{ 
-            flex: 1,
-            minHeight: 0,
-            overflow: 'auto',
-            WebkitOverflowScrolling: 'touch'
-          }} 
-          className="p-4 bg-white dark:bg-gray-950"
-        >
-          {!result ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <svg className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-              </svg>
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">No response yet</h4>
-              <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
-                Click Execute above to send your GraphQL query and see the response here. The response will be scrollable.
-              </p>
-            </div>
-          ) : result.error ? (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-              <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Error</h4>
-              <pre className="text-xs text-red-600 dark:text-red-300 whitespace-pre-wrap font-mono">{result.error}</pre>
-            </div>
-          ) : result.response?.errors ? (
-            <div className="space-y-3">
-              {result.response.data && (
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
-                  <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">Data (Partial)</h4>
-                  <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono">{formatJSON(result.response.data)}</pre>
-                </div>
-              )}
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
-                <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">GraphQL Errors</h4>
-                {result.response.errors.map((error, index) => (
-                  <div key={index} className="mb-3 last:mb-0">
-                    <p className="text-xs text-red-600 dark:text-red-300 mb-1">{error.message}</p>
-                    {error.locations && (
-                      <p className="text-xs text-red-500 dark:text-red-400">
-                        Line {error.locations[0].line}, Column {error.locations[0].column}
-                      </p>
-                    )}
-                    {error.path && <p className="text-xs text-red-500 dark:text-red-400">Path: {error.path.join(' → ')}</p>}
-                  </div>
-                ))}
+
+        {!result ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <svg className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">No response yet</h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs">
+              Click Execute above to send your GraphQL query and see the response here.
+            </p>
+          </div>
+        ) : result.error ? (
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+            <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">Error</h4>
+            <pre className="text-xs text-red-600 dark:text-red-300 whitespace-pre-wrap font-mono">{result.error}</pre>
+          </div>
+        ) : result.response?.errors ? (
+          <div className="space-y-3">
+            {result.response.data && (
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+                <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">Data (Partial)</h4>
+                <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono">{formatJSON(result.response.data)}</pre>
               </div>
+            )}
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded">
+              <h4 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-2">GraphQL Errors</h4>
+              {result.response.errors.map((error, index) => (
+                <div key={index} className="mb-3 last:mb-0">
+                  <p className="text-xs text-red-600 dark:text-red-300 mb-1">{error.message}</p>
+                  {error.locations && (
+                    <p className="text-xs text-red-500 dark:text-red-400">
+                      Line {error.locations[0].line}, Column {error.locations[0].column}
+                    </p>
+                  )}
+                  {error.path && <p className="text-xs text-red-500 dark:text-red-400">Path: {error.path.join(' → ')}</p>}
+                </div>
+              ))}
             </div>
-          ) : result.response?.data ? (
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
-              <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">Success ✓</h4>
-              <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono">{formatJSON(result.response.data)}</pre>
-            </div>
-          ) : (
-            <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
-              <p className="text-xs text-gray-600 dark:text-gray-400">No data returned</p>
-            </div>
-          )}
-        </div>
+          </div>
+        ) : result.response?.data ? (
+          <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded">
+            <h4 className="text-sm font-semibold text-green-700 dark:text-green-400 mb-2">Success ✓</h4>
+            <pre className="text-xs text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono">{formatJSON(result.response.data)}</pre>
+          </div>
+        ) : (
+          <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
+            <p className="text-xs text-gray-600 dark:text-gray-400">No data returned</p>
+          </div>
+        )}
       </div>
     </div>
   );
