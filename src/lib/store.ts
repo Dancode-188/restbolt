@@ -33,6 +33,10 @@ interface AppState {
   theme: 'light' | 'dark';
   sidebarCollapsed: boolean;
   
+  // Response comparison
+  comparisonMode: boolean;
+  comparisonResponse: Response | null;
+  
   // Actions
   addTab: () => void;
   closeTab: (id: string) => void;
@@ -48,6 +52,8 @@ interface AppState {
   setActiveEnvironment: (environment: Environment | null) => void;
   toggleTheme: () => void;
   toggleSidebar: () => void;
+  setComparisonMode: (mode: boolean, response?: Response | null) => void;
+  clearComparison: () => void;
 }
 
 export const useStore = create<AppState>()(
@@ -72,6 +78,8 @@ export const useStore = create<AppState>()(
       activeEnvironment: null,
       theme: 'dark',
       sidebarCollapsed: false,
+      comparisonMode: false,
+      comparisonResponse: null,
       
       // Tab actions
       addTab: () => set((state) => {
@@ -160,6 +168,16 @@ export const useStore = create<AppState>()(
   toggleSidebar: () => set((state) => ({
     sidebarCollapsed: !state.sidebarCollapsed,
   })),
+  
+  setComparisonMode: (mode, response) => set({
+    comparisonMode: mode,
+    comparisonResponse: response || null,
+  }),
+  
+  clearComparison: () => set({
+    comparisonMode: false,
+    comparisonResponse: null,
+  }),
 }),
   {
     name: 'restbolt-storage',

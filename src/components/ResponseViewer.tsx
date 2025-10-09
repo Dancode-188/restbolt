@@ -3,11 +3,19 @@
 import { useState } from 'react';
 import { useStore } from '@/lib/store';
 import Editor from '@monaco-editor/react';
+import DiffViewer from './DiffViewer';
+import ComparisonSelector from './ComparisonSelector';
 
 export default function ResponseViewer() {
-  const { currentResponse, theme } = useStore();
+  const { currentResponse, theme, comparisonMode, setComparisonMode } = useStore();
   const [showHeaders, setShowHeaders] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [showComparisonSelector, setShowComparisonSelector] = useState(false);
+
+  // Show DiffViewer if in comparison mode
+  if (comparisonMode) {
+    return <DiffViewer />;
+  }
 
   if (!currentResponse) {
     return (
@@ -102,6 +110,15 @@ export default function ResponseViewer() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setShowComparisonSelector(true)}
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              Compare
+            </button>
+            <button
               onClick={() => setShowHeaders(!showHeaders)}
               className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
             >
@@ -173,6 +190,15 @@ export default function ResponseViewer() {
           }}
         />
       </div>
+
+      {/* Comparison Selector Modal */}
+      <ComparisonSelector
+        isOpen={showComparisonSelector}
+        onClose={() => setShowComparisonSelector(false)}
+        onSelect={(response) => {
+          setComparisonMode(true, response);
+        }}
+      />
     </div>
   );
 }
