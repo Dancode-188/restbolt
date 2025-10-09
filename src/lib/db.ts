@@ -1,5 +1,5 @@
 import Dexie, { Table } from 'dexie';
-import { Request, Collection, Environment, Response } from '@/types';
+import { Request, Collection, Environment, Response, Chain, ChainExecution } from '@/types';
 
 export interface HistoryItem extends Request {
   timestamp: Date;
@@ -10,6 +10,8 @@ export class RestBoltDB extends Dexie {
   collections!: Table<Collection>;
   history!: Table<HistoryItem>;
   environments!: Table<Environment>;
+  chains!: Table<Chain>;
+  chainExecutions!: Table<ChainExecution>;
 
   constructor() {
     super('RestBoltDB');
@@ -25,6 +27,15 @@ export class RestBoltDB extends Dexie {
       collections: '++id, name, createdAt, updatedAt',
       history: '++id, timestamp, method, url',
       environments: '++id, name, isActive'
+    });
+
+    // Version 3: Add chains and chain executions
+    this.version(3).stores({
+      collections: '++id, name, createdAt, updatedAt',
+      history: '++id, timestamp, method, url',
+      environments: '++id, name, isActive',
+      chains: '++id, name, createdAt, updatedAt',
+      chainExecutions: '++id, chainId, startedAt, status'
     });
   }
 }

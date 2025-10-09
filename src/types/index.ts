@@ -33,3 +33,50 @@ export interface Environment {
   variables: Record<string, string>;
   isActive: boolean;
 }
+
+// Request Chaining Types
+export interface ChainStep {
+  id: string;
+  order: number;
+  requestId?: string; // Reference to saved request, or inline request
+  request?: Request; // Inline request definition
+  name: string;
+  description?: string;
+  variableExtractions: Array<{
+    name: string;
+    path: string; // JSONPath
+    description?: string;
+  }>;
+  continueOnError: boolean;
+  delay?: number; // milliseconds to wait before executing
+}
+
+export interface Chain {
+  id: string;
+  name: string;
+  description?: string;
+  steps: ChainStep[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ChainExecution {
+  id: string;
+  chainId: string;
+  startedAt: Date;
+  completedAt?: Date;
+  status: 'running' | 'completed' | 'failed' | 'cancelled';
+  steps: Array<{
+    stepId: string;
+    order: number;
+    status: 'pending' | 'running' | 'success' | 'failed' | 'skipped';
+    request?: Request;
+    response?: Response;
+    error?: string;
+    extractedVariables?: Record<string, any>;
+    startedAt?: Date;
+    completedAt?: Date;
+  }>;
+  variables: Record<string, any>;
+  error?: string;
+}
