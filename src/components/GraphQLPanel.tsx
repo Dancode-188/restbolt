@@ -258,16 +258,15 @@ export default function GraphQLPanel() {
           )}
         </div>
         
-        {/* SCROLLABLE CONTENT WITH BOTTOM PADDING */}
+        {/* SCROLLABLE CONTENT WITH PROPER PADDING */}
         <div 
           style={{ 
             height: `${responseHeight - 32}px`,
             overflowY: 'scroll',
             overflowX: 'hidden'
-          }} 
-          className="p-4"
+          }}
         >
-          <div style={{ paddingBottom: '60px' }}>
+          <div style={{ padding: '16px', paddingBottom: '400px' }}>
             {!result ? (
               <div className="flex flex-col items-center justify-center text-center py-12">
                 <svg className="w-16 h-16 text-gray-300 dark:text-gray-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
