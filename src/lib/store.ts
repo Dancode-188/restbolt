@@ -190,10 +190,23 @@ export const useStore = create<AppState>()(
   
   mergeChainVariables: (variables) => {
     console.log('🏪 Store mergeChainVariables called with:', variables); // ← Debug log
+    
+    // Filter out undefined and null values to keep the store clean
+    const cleanedVariables = Object.entries(variables).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null) {
+        acc[key] = value;
+      } else {
+        console.log(`⚠️ Skipping ${key} because value is ${value}`);
+      }
+      return acc;
+    }, {} as Record<string, any>);
+    
+    console.log('🧹 Cleaned variables (removed undefined/null):', cleanedVariables); // ← Debug log
+    
     set((state) => {
       const newChainVars = {
         ...state.chainVariables,
-        ...variables,
+        ...cleanedVariables,
       };
       console.log('🏪 New chainVariables:', newChainVars); // ← Debug log
       return { chainVariables: newChainVars };

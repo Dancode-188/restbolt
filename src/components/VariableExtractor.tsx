@@ -10,7 +10,7 @@ interface VariableExtractorProps {
 }
 
 export default function VariableExtractor({ response, onExtract }: VariableExtractorProps) {
-  const { theme } = useStore();
+  const { theme, chainVariables } = useStore();
   const [extractions, setExtractions] = useState<VariableExtraction[]>([]);
   const [newExtraction, setNewExtraction] = useState({ name: '', path: '', description: '' });
   const [extractedVars, setExtractedVars] = useState<Record<string, any>>({});
@@ -21,15 +21,27 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
   const isSuccessResponse = response?.status >= 200 && response?.status < 300;
 
   // Auto-detect variables on mount - ONLY for successful responses
+  // Filter out variables that are already extracted
   useEffect(() => {
     if (response?.data && isSuccessResponse) {
       const detected = variableExtractionService.autoDetectVariables(response.data);
-      setAutoDetected(detected);
+      
+      // Filter out variables that already exist in chainVariables
+      const newVariables = detected.filter(v => {
+        const exists = chainVariables && chainVariables.hasOwnProperty(v.name);
+        return !exists;
+      });
+      
+      console.log('🔍 Auto-detected variables (before filtering):', detected.map(v => v.name));
+      console.log('📋 Existing chainVariables:', Object.keys(chainVariables || {}));
+      console.log('✨ New variables to suggest:', newVariables.map(v => v.name));
+      
+      setAutoDetected(newVariables);
     } else {
       // Clear auto-detected variables for error responses
       setAutoDetected([]);
     }
-  }, [response, isSuccessResponse]);
+  }, [response, isSuccessResponse, chainVariables]);
 
   // Extract variables whenever extractions change - ONLY for successful responses
   useEffect(() => {
@@ -115,7 +127,7 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
                   <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
-                  Auto-detected Variables
+                  New Variables Detected
                 </h4>
             <div className="space-y-1">
               {autoDetected.map((extraction, index) => (
@@ -135,6 +147,15 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Message when no new variables detected */}
+        {autoDetected.length === 0 && Object.keys(chainVariables || {}).length > 0 && (
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+            <p className="text-xs text-blue-800 dark:text-blue-300">
+              ℹ️ No new variables detected. All available variables are already extracted.
+            </p>
           </div>
         )}
 
