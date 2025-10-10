@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Chain, ChainStep, Request } from '@/types';
 import { chainService } from '@/lib/chain-service';
 import { useStore } from '@/lib/store';
@@ -19,6 +19,40 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
+
+  // Debounce timers for auto-save
+  const updateTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  // Debounced database update - saves after user stops typing
+  const debouncedUpdateStep = useCallback((chainId: string, stepId: string, updates: Partial<ChainStep>) => {
+    // Clear existing timer for this step
+    const timerId = updateTimers.current.get(stepId);
+    if (timerId) {
+      clearTimeout(timerId);
+    }
+
+    // Set new timer - save after 500ms of inactivity
+    const newTimerId = setTimeout(async () => {
+      console.log('💾 Auto-saving step:', stepId, updates);
+      try {
+        await chainService.updateStep(chainId, stepId, updates);
+        console.log('✅ Step saved to database');
+      } catch (error) {
+        console.error('❌ Error saving step:', error);
+      }
+      updateTimers.current.delete(stepId);
+    }, 500);
+
+    updateTimers.current.set(stepId, newTimerId);
+  }, []);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      updateTimers.current.forEach(timer => clearTimeout(timer));
+      updateTimers.current.clear();
+    };
+  }, []);
 
   // Load chain if editing
   useEffect(() => {
@@ -171,15 +205,21 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
     }
   };
 
-  const handleUpdateStep = async (stepId: string, updates: Partial<ChainStep>) => {
+  const handleUpdateStep = (stepId: string, updates: Partial<ChainStep>) => {
     if (!chain) return;
-    try {
-      await chainService.updateStep(chain.id, stepId, updates);
-      await loadChain(chain.id);
-    } catch (error) {
-      console.error('❌ Error updating step:', error);
-      alert(`Failed to update step: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    
+    console.log('🔄 Updating step locally:', stepId, updates);
+    
+    // Update local state immediately for instant UI feedback
+    setChain({
+      ...chain,
+      steps: chain.steps.map(step =>
+        step.id === stepId ? { ...step, ...updates } : step
+      )
+    });
+
+    // Debounced save to database (happens 500ms after user stops typing)
+    debouncedUpdateStep(chain.id, stepId, updates);
   };
 
   if (!isOpen) return null;
