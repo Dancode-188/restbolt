@@ -48,6 +48,8 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       const detected = variableExtractionService.autoDetectVariables(response.data);
       
       // Filter out variables that already exist in chainVariables
+      // NOTE: We read chainVariables here but DON'T include it in dependencies
+      // to avoid infinite loops. We only want to re-run when response changes.
       const newVariables = detected.filter(v => {
         const exists = chainVariables && chainVariables.hasOwnProperty(v.name);
         return !exists;
@@ -62,7 +64,7 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       // Clear auto-detected variables for error responses
       setAutoDetected([]);
     }
-  }, [response, isSuccessResponse, chainVariables]);
+  }, [response, isSuccessResponse]); // ← REMOVED chainVariables to prevent infinite loop
 
   // Extract variables whenever extractions change - ONLY for successful responses
   // NOW WITH CONFLICT DETECTION!
@@ -119,7 +121,8 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       console.log('⚠️ Skipping variable extraction - Error response (status:', response?.status, ')');
       setExtractedVars({});
     }
-  }, [extractions, response, isSuccessResponse, chainVariables]); // Added chainVariables dependency
+  }, [extractions, response, isSuccessResponse]); // ← REMOVED chainVariables to prevent infinite loop
+  // We read chainVariables inside the effect but don't depend on it for re-running
 
   // Helper function to check if a variable would conflict with an existing one
   const checkConflict = (varName: string, extraction: VariableExtraction): { hasConflict: boolean; existingValue: any; newValue: any } => {
