@@ -34,7 +34,7 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       onExtract(vars);
       console.log('✅ Called onExtract with:', vars); // ← Debug log
     }
-  }, [extractions, response, onExtract]); // ← Added onExtract to dependencies
+  }, [extractions, response]); // ← Removed onExtract to prevent infinite loop
 
   const addExtraction = () => {
     if (!newExtraction.name.trim() || !newExtraction.path.trim()) return;
