@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react';
 import { scriptingService } from '@/lib/scripting-service';
 import { useStore } from '@/lib/store';
 
+interface ConfirmDialog {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  confirmText?: string;
+  isDangerous?: boolean;
+}
+
 export default function VariablesPanel() {
   const { chainVariables, mergeChainVariables, clearChainVariables } = useStore();
   const [scriptVariables, setScriptVariables] = useState<Map<string, any>>(new Map());
@@ -13,6 +22,12 @@ export default function VariablesPanel() {
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
   const [activeSource, setActiveSource] = useState<'chain' | 'script'>('chain');
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialog>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   // Debug: Log chainVariables whenever they change
   useEffect(() => {
@@ -66,16 +81,24 @@ export default function VariablesPanel() {
   };
 
   const handleDelete = (key: string) => {
-    if (confirm(`Delete variable "${key}"?`)) {
-      if (activeSource === 'chain') {
-        const newVars = { ...chainVariables };
-        delete newVars[key];
-        mergeChainVariables(newVars);
-      } else {
-        scriptingService.deleteVariable(key);
-        loadScriptVariables();
-      }
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Delete Variable',
+      message: `Are you sure you want to delete "${key}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: () => {
+        if (activeSource === 'chain') {
+          const newVars = { ...chainVariables };
+          delete newVars[key];
+          mergeChainVariables(newVars);
+        } else {
+          scriptingService.deleteVariable(key);
+          loadScriptVariables();
+        }
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+      },
+    });
   };
 
   const handleAddNew = () => {
@@ -110,14 +133,28 @@ export default function VariablesPanel() {
   };
 
   const handleClearAll = () => {
-    if (confirm('Clear all variables? This cannot be undone.')) {
-      if (activeSource === 'chain') {
-        clearChainVariables();
-      } else {
-        scriptingService.clearVariables();
-        loadScriptVariables();
-      }
-    }
+    const varCount = activeSource === 'chain' 
+      ? Object.keys(chainVariables).length 
+      : scriptVariables.size;
+    
+    const varType = activeSource === 'chain' ? 'Chain' : 'Script';
+    
+    setConfirmDialog({
+      isOpen: true,
+      title: `Clear All ${varType} Variables`,
+      message: `Are you sure you want to clear all ${varCount} ${varType.toLowerCase()} variable${varCount === 1 ? '' : 's'}? This action cannot be undone.`,
+      confirmText: 'Clear All',
+      isDangerous: true,
+      onConfirm: () => {
+        if (activeSource === 'chain') {
+          clearChainVariables();
+        } else {
+          scriptingService.clearVariables();
+          loadScriptVariables();
+        }
+        setConfirmDialog({ ...confirmDialog, isOpen: false });
+      },
+    });
   };
 
   const formatValue = (value: any): string => {
@@ -363,6 +400,52 @@ export default function VariablesPanel() {
           <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
             Use variables in requests with <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded font-mono">{'{{variableName}}'}</code>
           </p>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                {confirmDialog.isDangerous && (
+                  <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                )}
+                {confirmDialog.title}
+              </h3>
+            </div>
+            
+            {/* Body */}
+            <div className="px-6 py-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {confirmDialog.message}
+              </p>
+            </div>
+            
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 rounded-b-lg flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDialog.onConfirm}
+                className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
+                  confirmDialog.isDangerous
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {confirmDialog.confirmText || 'Confirm'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
