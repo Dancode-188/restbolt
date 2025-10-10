@@ -17,24 +17,34 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
   const [showExamples, setShowExamples] = useState(false);
   const [autoDetected, setAutoDetected] = useState<VariableExtraction[]>([]);
 
-  // Auto-detect variables on mount
+  // Check if response is successful (2xx status)
+  const isSuccessResponse = response?.status >= 200 && response?.status < 300;
+
+  // Auto-detect variables on mount - ONLY for successful responses
   useEffect(() => {
-    if (response?.data) {
+    if (response?.data && isSuccessResponse) {
       const detected = variableExtractionService.autoDetectVariables(response.data);
       setAutoDetected(detected);
+    } else {
+      // Clear auto-detected variables for error responses
+      setAutoDetected([]);
     }
-  }, [response]);
+  }, [response, isSuccessResponse]);
 
-  // Extract variables whenever extractions change
+  // Extract variables whenever extractions change - ONLY for successful responses
   useEffect(() => {
-    if (response?.data && extractions.length > 0) {
+    if (response?.data && extractions.length > 0 && isSuccessResponse) {
       const vars = variableExtractionService.extractVariables(response.data, extractions);
       console.log('🔍 Extracting variables:', vars); // ← Debug log
       setExtractedVars(vars);
       onExtract(vars);
       console.log('✅ Called onExtract with:', vars); // ← Debug log
+    } else if (!isSuccessResponse && extractions.length > 0) {
+      // Clear extracted vars for error responses
+      console.log('⚠️ Skipping variable extraction - Error response (status:', response?.status, ')');
+      setExtractedVars({});
     }
-  }, [extractions, response]); // ← Removed onExtract to prevent infinite loop
+  }, [extractions, response, isSuccessResponse]); // ← Removed onExtract to prevent infinite loop
 
   const addExtraction = () => {
     if (!newExtraction.name.trim() || !newExtraction.path.trim()) return;
@@ -74,16 +84,39 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
         </p>
       </div>
 
+      {/* Error Response Warning */}
+      {!isSuccessResponse && (
+        <div className="m-4 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h4 className="text-sm font-semibold text-orange-900 dark:text-orange-200 mb-1">
+                Cannot Extract from Error Response
+              </h4>
+              <p className="text-xs text-orange-700 dark:text-orange-300">
+                Variable extraction is only available for successful responses (status 2xx). This response has status {response?.status || 'unknown'}. 
+                Send a successful request to extract variables.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-auto p-4 space-y-4">
-        {/* Auto-detected variables */}
-        {autoDetected.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-              <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Auto-detected Variables
-            </h4>
+        {/* Only show variable extraction UI for successful responses */}
+        {isSuccessResponse ? (
+          <>
+            {/* Auto-detected variables */}
+            {autoDetected.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  Auto-detected Variables
+                </h4>
             <div className="space-y-1">
               {autoDetected.map((extraction, index) => (
                 <button
@@ -231,6 +264,23 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
             </div>
             <div className="text-xs text-green-700 dark:text-green-400">
               These variables can now be used in your next request using the syntax: <code className="font-mono">{'{{variableName}}'}</code>
+            </div>
+          </div>
+        )}
+          </>
+        ) : (
+          /* Show helpful message for error responses */
+          <div className="flex items-center justify-center h-full text-center p-8">
+            <div>
+              <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Request Failed
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Fix the error and send a successful request to extract variables
+              </p>
             </div>
           </div>
         )}
