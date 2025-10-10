@@ -323,6 +323,13 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
 
   const handleSend = async () => {
     if (!url.trim()) return;
+    
+    console.log('🚀 BEFORE SEND - chainVariables:', chainVariables);
+    console.log('🚀 BEFORE SEND - chainVariables type:', typeof chainVariables);
+    console.log('🚀 BEFORE SEND - chainVariables keys:', Object.keys(chainVariables));
+    console.log('🚀 BEFORE SEND - chainVariables values:', Object.values(chainVariables));
+    console.log('🚀 BEFORE SEND - chainVariables entries:', Object.entries(chainVariables));
+    
     setLoading(true);
     setError(null);
     setScriptResult(null);
@@ -334,6 +341,9 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
         ...(activeEnv?.variables || {}),
         ...chainVariables, // Merge chain variables so they can be used
       };
+      
+      console.log('🔧 MERGED envVars:', envVars);
+      console.log('🔧 URL before interpolation:', url.trim());
 
       // Prepare request context
       const headersForScript = headers
@@ -365,6 +375,10 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
 
       // Replace variables in URL (from both environment and script variables)
       let processedUrl = scriptingService.interpolateVariables(url.trim(), envVars);
+      
+      console.log('✨ AFTER interpolation - processedUrl:', processedUrl);
+      console.log('✨ AFTER interpolation - original URL:', url.trim());
+      console.log('✨ Did interpolation change URL?', processedUrl !== url.trim());
 
       // Replace variables in headers
       const headersObject = headers
