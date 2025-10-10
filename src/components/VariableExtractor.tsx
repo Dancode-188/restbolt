@@ -116,6 +116,22 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       setExtractedVars(vars);
       onExtract(vars);
       console.log('✅ Called onExtract with:', vars);
+      
+      // AUTO-REMOVE: Remove extraction rules after successful extraction
+      // This prevents rules from persisting and causing conflicts on future requests
+      const successfulExtractions = Object.keys(vars).filter(key => vars[key] !== undefined);
+      if (successfulExtractions.length > 0) {
+        const remainingExtractions = extractions.filter(
+          extraction => !successfulExtractions.includes(extraction.name)
+        );
+        
+        if (remainingExtractions.length < extractions.length) {
+          console.log('🧹 Auto-removing extraction rules:', successfulExtractions);
+          console.log('   Reason: Rules are automatically removed after successful extraction');
+          console.log('   Your variables are still saved! Add rules again if you need to re-extract.');
+          setExtractions(remainingExtractions);
+        }
+      }
     } else if (!isSuccessResponse && extractions.length > 0) {
       // Clear extracted vars for error responses
       console.log('⚠️ Skipping variable extraction - Error response (status:', response?.status, ')');
@@ -303,11 +319,18 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       console.log('✅ User approved replacement, calling onExtract with:', conflictModal.pendingVars);
       setExtractedVars(conflictModal.pendingVars);
       onExtract(conflictModal.pendingVars);
+      
+      // AUTO-REMOVE: Remove the rule after user approves replacement
+      const updatedExtractions = extractions.filter(e => e.name !== conflictModal.varName);
+      console.log('🧹 Auto-removing extraction rule:', conflictModal.varName);
+      setExtractions(updatedExtractions);
     } else if (conflictModal.isAutoDetected) {
       // For auto-detected, add the extraction rule
+      // NOTE: The auto-remove will happen automatically in the extraction effect
       setExtractions([...extractions, conflictModal.extraction]);
     } else {
       // For custom extraction, add the rule and clear the form
+      // NOTE: The auto-remove will happen automatically in the extraction effect
       setExtractions([...extractions, conflictModal.extraction]);
       setNewExtraction({ name: '', path: '', description: '' });
     }
