@@ -44,7 +44,7 @@ interface RequestBuilderProps {
 }
 
 export default function RequestBuilder({ selectedHistoryItem, selectedRequest }: RequestBuilderProps) {
-  const { setCurrentResponse, theme, tabs, activeTabId, updateTab } = useStore();
+  const { setCurrentResponse, theme, tabs, activeTabId, updateTab, chainVariables } = useStore();
   const [method, setMethod] = useState<typeof HTTP_METHODS[number]>('GET');
   const [url, setUrl] = useState('https://jsonplaceholder.typicode.com/posts');
   const [headers, setHeaders] = useState<Header[]>([]);
@@ -330,7 +330,10 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
     try {
       // Get active environment for variable replacement
       const activeEnv = await environmentService.getActiveEnvironment();
-      const envVars = activeEnv?.variables || {};
+      const envVars = {
+        ...(activeEnv?.variables || {}),
+        ...chainVariables, // Merge chain variables so they can be used
+      };
 
       // Prepare request context
       const headersForScript = headers

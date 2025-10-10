@@ -188,12 +188,17 @@ export const useStore = create<AppState>()(
   
   setChainVariables: (variables) => set({ chainVariables: variables }),
   
-  mergeChainVariables: (variables) => set((state) => ({
-    chainVariables: {
-      ...state.chainVariables,
-      ...variables,
-    },
-  })),
+  mergeChainVariables: (variables) => {
+    console.log('🏪 Store mergeChainVariables called with:', variables); // ← Debug log
+    set((state) => {
+      const newChainVars = {
+        ...state.chainVariables,
+        ...variables,
+      };
+      console.log('🏪 New chainVariables:', newChainVars); // ← Debug log
+      return { chainVariables: newChainVars };
+    });
+  },
   
   clearChainVariables: () => set({ chainVariables: {} }),
 }),
@@ -203,6 +208,7 @@ export const useStore = create<AppState>()(
       tabs: state.tabs,
       activeTabId: state.activeTabId,
       theme: state.theme,
+      chainVariables: state.chainVariables, // ← Add this!
     }),
   }
 ));

@@ -15,7 +15,9 @@ export default function ResponseViewer() {
   const [showComparisonSelector, setShowComparisonSelector] = useState(false);
 
   const handleVariablesExtracted = (variables: Record<string, any>) => {
+    console.log('📦 ResponseViewer received variables:', variables); // ← Debug log
     mergeChainVariables(variables);
+    console.log('✅ Merged into store'); // ← Debug log
   };
 
   // Show DiffViewer if in comparison mode

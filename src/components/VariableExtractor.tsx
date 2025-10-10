@@ -29,10 +29,12 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
   useEffect(() => {
     if (response?.data && extractions.length > 0) {
       const vars = variableExtractionService.extractVariables(response.data, extractions);
+      console.log('🔍 Extracting variables:', vars); // ← Debug log
       setExtractedVars(vars);
       onExtract(vars);
+      console.log('✅ Called onExtract with:', vars); // ← Debug log
     }
-  }, [extractions, response]);
+  }, [extractions, response, onExtract]); // ← Added onExtract to dependencies
 
   const addExtraction = () => {
     if (!newExtraction.name.trim() || !newExtraction.path.trim()) return;
