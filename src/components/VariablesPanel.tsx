@@ -132,6 +132,19 @@ export default function VariablesPanel() {
     ? Object.entries(chainVariables)
     : Array.from(scriptVariables.entries());
 
+  // Debug: Log what we're actually rendering
+  useEffect(() => {
+    console.log('🎨 VariablesPanel rendering with:');
+    console.log('  - activeSource:', activeSource);
+    console.log('  - currentVariables:', currentVariables);
+    console.log('  - currentVariables detailed:', currentVariables.map(([k, v]) => ({
+      key: k,
+      value: v,
+      valueType: typeof v,
+      valueString: String(v)
+    })));
+  }, [currentVariables, activeSource]);
+
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
       {/* Header */}
