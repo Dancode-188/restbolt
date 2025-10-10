@@ -16,6 +16,23 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
   const [extractedVars, setExtractedVars] = useState<Record<string, any>>({});
   const [showExamples, setShowExamples] = useState(false);
   const [autoDetected, setAutoDetected] = useState<VariableExtraction[]>([]);
+  
+  // Conflict detection state
+  const [conflictModal, setConflictModal] = useState<{
+    show: boolean;
+    varName: string;
+    existingValue: any;
+    newValue: any;
+    extraction: VariableExtraction | null;
+    isAutoDetected: boolean;
+  }>({
+    show: false,
+    varName: '',
+    existingValue: null,
+    newValue: null,
+    extraction: null,
+    isAutoDetected: false,
+  });
 
   // Check if response is successful (2xx status)
   const isSuccessResponse = response?.status >= 200 && response?.status < 300;
@@ -58,6 +75,55 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
     }
   }, [extractions, response, isSuccessResponse]); // ← Removed onExtract to prevent infinite loop
 
+  // Helper function to check if a variable would conflict with an existing one
+  const checkConflict = (varName: string, extraction: VariableExtraction): { hasConflict: boolean; existingValue: any; newValue: any } => {
+    // Check if variable already exists in chainVariables
+    if (!chainVariables || !chainVariables.hasOwnProperty(varName)) {
+      return { hasConflict: false, existingValue: null, newValue: null };
+    }
+
+    // Get the existing value
+    const existingValue = chainVariables[varName];
+
+    // Try to extract the new value
+    if (!response?.data) {
+      return { hasConflict: false, existingValue: null, newValue: null };
+    }
+
+    const testVars = variableExtractionService.extractVariables(response.data, [extraction]);
+    const newValue = testVars[varName];
+
+    // If new value is undefined or same as existing, no conflict
+    if (newValue === undefined || newValue === existingValue) {
+      return { hasConflict: false, existingValue, newValue };
+    }
+
+    // We have a conflict!
+    return { hasConflict: true, existingValue, newValue };
+  };
+
+  // Get suggested alternative name for a conflicting variable
+  const getSuggestedName = (baseName: string): string => {
+    // Common patterns
+    const patterns: Record<string, string> = {
+      'id': 'postId',
+      'userId': 'authorId',
+      'name': 'userName',
+      'email': 'userEmail',
+      'title': 'postTitle',
+      'body': 'postBody',
+      'data': 'responseData',
+    };
+
+    // Check if we have a common pattern suggestion
+    if (patterns[baseName]) {
+      return patterns[baseName];
+    }
+
+    // Otherwise, add a prefix
+    return `new${baseName.charAt(0).toUpperCase()}${baseName.slice(1)}`;
+  };
+
   const addExtraction = () => {
     if (!newExtraction.name.trim() || !newExtraction.path.trim()) return;
 
@@ -68,6 +134,23 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       return;
     }
 
+    // Check for conflicts with existing variables
+    const conflict = checkConflict(newExtraction.name, newExtraction);
+    
+    if (conflict.hasConflict) {
+      // Show conflict modal
+      setConflictModal({
+        show: true,
+        varName: newExtraction.name,
+        existingValue: conflict.existingValue,
+        newValue: conflict.newValue,
+        extraction: { ...newExtraction },
+        isAutoDetected: false,
+      });
+      return;
+    }
+
+    // No conflict, proceed normally
     setExtractions([...extractions, { ...newExtraction }]);
     setNewExtraction({ name: '', path: '', description: '' });
   };
@@ -77,9 +160,80 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
   };
 
   const addAutoDetected = (extraction: VariableExtraction) => {
-    if (!extractions.find(e => e.name === extraction.name)) {
-      setExtractions([...extractions, extraction]);
+    // Don't add if already in extractions list
+    if (extractions.find(e => e.name === extraction.name)) {
+      return;
     }
+
+    // Check for conflicts with existing variables
+    const conflict = checkConflict(extraction.name, extraction);
+    
+    if (conflict.hasConflict) {
+      // Show conflict modal
+      setConflictModal({
+        show: true,
+        varName: extraction.name,
+        existingValue: conflict.existingValue,
+        newValue: conflict.newValue,
+        extraction: extraction,
+        isAutoDetected: true,
+      });
+      return;
+    }
+
+    // No conflict, proceed normally
+    setExtractions([...extractions, extraction]);
+  };
+
+  // Handle conflict resolution: Cancel
+  const handleConflictCancel = () => {
+    setConflictModal({
+      show: false,
+      varName: '',
+      existingValue: null,
+      newValue: null,
+      extraction: null,
+      isAutoDetected: false,
+    });
+  };
+
+  // Handle conflict resolution: Use Different Name
+  const handleConflictUseDifferentName = () => {
+    if (!conflictModal.extraction) return;
+
+    const suggestedName = getSuggestedName(conflictModal.varName);
+    
+    // Pre-fill the custom extraction form with suggested name
+    setNewExtraction({
+      name: suggestedName,
+      path: conflictModal.extraction.path,
+      description: conflictModal.extraction.description || '',
+    });
+
+    // Close the modal
+    handleConflictCancel();
+
+    // Scroll to the custom extraction section if needed
+    const customSection = document.querySelector('[data-custom-extraction]');
+    customSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  // Handle conflict resolution: Replace Anyway
+  const handleConflictReplace = () => {
+    if (!conflictModal.extraction) return;
+
+    // Add the extraction despite the conflict
+    if (conflictModal.isAutoDetected) {
+      // For auto-detected, just add it
+      setExtractions([...extractions, conflictModal.extraction]);
+    } else {
+      // For custom, add and clear the form
+      setExtractions([...extractions, conflictModal.extraction]);
+      setNewExtraction({ name: '', path: '', description: '' });
+    }
+
+    // Close the modal
+    handleConflictCancel();
   };
 
   const examples = variableExtractionService.getExamples();
@@ -160,7 +314,7 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
         )}
 
         {/* Add new extraction */}
-        <div className="space-y-3">
+        <div className="space-y-3" data-custom-extraction>
           <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300">
             Add Custom Extraction
           </h4>
@@ -306,6 +460,87 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
           </div>
         )}
       </div>
+
+      {/* Conflict Detection Modal */}
+      {conflictModal.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full animate-in fade-in zoom-in duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+                  <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Variable Already Exists
+                </h3>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="px-6 py-4 space-y-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                The variable <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded font-mono text-xs">{conflictModal.varName}</code> already exists with a different value.
+              </p>
+
+              {/* Value Comparison */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    Current Value
+                  </div>
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                    <code className="text-sm font-mono text-blue-900 dark:text-blue-100 break-all">
+                      {variableExtractionService.formatVariableValue(conflictModal.existingValue)}
+                    </code>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    New Value
+                  </div>
+                  <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
+                    <code className="text-sm font-mono text-orange-900 dark:text-orange-100 break-all">
+                      {variableExtractionService.formatVariableValue(conflictModal.newValue)}
+                    </code>
+                  </div>
+                </div>
+              </div>
+
+              {/* Warning Message */}
+              <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
+                <p className="text-xs text-orange-800 dark:text-orange-200">
+                  ⚠️ <strong>Warning:</strong> Replacing this variable will overwrite the current value. Consider using a different name like <code className="px-1 py-0.5 bg-orange-100 dark:bg-orange-800 rounded font-mono">{getSuggestedName(conflictModal.varName)}</code> to keep both values.
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={handleConflictCancel}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConflictUseDifferentName}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+              >
+                Use Different Name
+              </button>
+              <button
+                onClick={handleConflictReplace}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 rounded transition-colors"
+              >
+                Replace Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
