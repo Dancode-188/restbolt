@@ -2,22 +2,32 @@
 
 import { useState, useEffect } from 'react';
 import { scriptingService } from '@/lib/scripting-service';
+import { useStore } from '@/lib/store';
 
 export default function VariablesPanel() {
-  const [variables, setVariables] = useState<Map<string, any>>(new Map());
+  const { chainVariables, mergeChainVariables, clearChainVariables } = useStore();
+  const [scriptVariables, setScriptVariables] = useState<Map<string, any>>(new Map());
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
   const [showAddNew, setShowAddNew] = useState(false);
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
+  const [activeSource, setActiveSource] = useState<'chain' | 'script'>('chain');
 
-  // Load variables on mount and refresh
-  const loadVariables = () => {
-    setVariables(new Map(scriptingService.getAllVariables()));
+  // Debug: Log chainVariables whenever they change
+  useEffect(() => {
+    console.log('🔍 VariablesPanel - chainVariables:', chainVariables);
+    console.log('🔍 VariablesPanel - chainVariables type:', typeof chainVariables);
+    console.log('🔍 VariablesPanel - chainVariables entries:', Object.entries(chainVariables));
+  }, [chainVariables]);
+
+  // Load script variables
+  const loadScriptVariables = () => {
+    setScriptVariables(new Map(scriptingService.getAllVariables()));
   };
 
   useEffect(() => {
-    loadVariables();
+    loadScriptVariables();
   }, []);
 
   const handleEdit = (key: string, value: any) => {
@@ -36,10 +46,15 @@ export default function VariablesPanel() {
         parsedValue = editingValue;
       }
       
-      scriptingService.setVariable(key, parsedValue);
+      if (activeSource === 'chain') {
+        mergeChainVariables({ [key]: parsedValue });
+      } else {
+        scriptingService.setVariable(key, parsedValue);
+        loadScriptVariables();
+      }
+      
       setEditingKey(null);
       setEditingValue('');
-      loadVariables();
     } catch (error) {
       console.error('Error saving variable:', error);
     }
@@ -52,8 +67,14 @@ export default function VariablesPanel() {
 
   const handleDelete = (key: string) => {
     if (confirm(`Delete variable "${key}"?`)) {
-      scriptingService.deleteVariable(key);
-      loadVariables();
+      if (activeSource === 'chain') {
+        const newVars = { ...chainVariables };
+        delete newVars[key];
+        mergeChainVariables(newVars);
+      } else {
+        scriptingService.deleteVariable(key);
+        loadScriptVariables();
+      }
     }
   };
 
@@ -73,11 +94,16 @@ export default function VariablesPanel() {
         parsedValue = newValue;
       }
 
-      scriptingService.setVariable(newKey.trim(), parsedValue);
+      if (activeSource === 'chain') {
+        mergeChainVariables({ [newKey.trim()]: parsedValue });
+      } else {
+        scriptingService.setVariable(newKey.trim(), parsedValue);
+        loadScriptVariables();
+      }
+      
       setNewKey('');
       setNewValue('');
       setShowAddNew(false);
-      loadVariables();
     } catch (error) {
       console.error('Error adding variable:', error);
     }
@@ -85,8 +111,12 @@ export default function VariablesPanel() {
 
   const handleClearAll = () => {
     if (confirm('Clear all variables? This cannot be undone.')) {
-      scriptingService.clearVariables();
-      loadVariables();
+      if (activeSource === 'chain') {
+        clearChainVariables();
+      } else {
+        scriptingService.clearVariables();
+        loadScriptVariables();
+      }
     }
   };
 
@@ -97,35 +127,64 @@ export default function VariablesPanel() {
     return String(value);
   };
 
-  const variablesArray = Array.from(variables.entries());
+  // Get current variables based on active source
+  const currentVariables = activeSource === 'chain' 
+    ? Object.entries(chainVariables)
+    : Array.from(scriptVariables.entries());
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            Variables
-          </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {variablesArray.length} variable{variablesArray.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAddNew(!showAddNew)}
-            className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            + Add New
-          </button>
-          {variablesArray.length > 0 && (
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Variables
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {currentVariables.length} variable{currentVariables.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleClearAll}
-              className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              onClick={() => setShowAddNew(!showAddNew)}
+              className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
             >
-              Clear All
+              + Add New
             </button>
-          )}
+            {currentVariables.length > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Clear All
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* Source Toggle */}
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded">
+          <button
+            onClick={() => setActiveSource('chain')}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+              activeSource === 'chain'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Chain Variables
+          </button>
+          <button
+            onClick={() => setActiveSource('script')}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+              activeSource === 'script'
+                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Script Variables
+          </button>
         </div>
       </div>
 
@@ -186,7 +245,7 @@ export default function VariablesPanel() {
           </div>
         )}
 
-        {variablesArray.length === 0 ? (
+        {currentVariables.length === 0 ? (
           <div className="p-8 text-center">
             <svg
               className="w-16 h-16 mx-auto text-gray-300 dark:text-gray-700 mb-4"
@@ -202,15 +261,18 @@ export default function VariablesPanel() {
               />
             </svg>
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              No variables yet
+              No {activeSource === 'chain' ? 'chain' : 'script'} variables yet
             </h4>
             <p className="text-xs text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
-              Variables are created by scripts or can be added manually. Use them in requests with <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded font-mono text-xs">{'{{variableName}}'}</code>
+              {activeSource === 'chain' 
+                ? 'Extract variables from responses in the Variables tab, or add them manually here.'
+                : 'Variables are created by scripts or can be added manually.'
+              } Use them in requests with <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded font-mono text-xs">{'{{variableName}}'}</code>
             </p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200 dark:divide-gray-800">
-            {variablesArray.map(([key, value]) => (
+            {currentVariables.map(([key, value]) => (
               <div key={key} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
                 {editingKey === key ? (
                   // Edit Mode
@@ -283,7 +345,7 @@ export default function VariablesPanel() {
       </div>
 
       {/* Footer with usage hint */}
-      {variablesArray.length > 0 && (
+      {currentVariables.length > 0 && (
         <div className="p-3 border-t border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
           <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
             Use variables in requests with <code className="px-1 py-0.5 bg-gray-100 dark:bg-gray-800 rounded font-mono">{'{{variableName}}'}</code>
