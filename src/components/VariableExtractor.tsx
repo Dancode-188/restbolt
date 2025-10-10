@@ -25,6 +25,8 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
     newValue: any;
     extraction: VariableExtraction | null;
     isAutoDetected: boolean;
+    fromAutoExtraction: boolean; // New flag for conflicts during automatic extraction
+    pendingVars: Record<string, any> | null; // Store the full extracted vars for later use
   }>({
     show: false,
     varName: '',
@@ -32,6 +34,8 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
     newValue: null,
     extraction: null,
     isAutoDetected: false,
+    fromAutoExtraction: false,
+    pendingVars: null,
   });
 
   // Check if response is successful (2xx status)
@@ -61,19 +65,61 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
   }, [response, isSuccessResponse, chainVariables]);
 
   // Extract variables whenever extractions change - ONLY for successful responses
+  // NOW WITH CONFLICT DETECTION!
   useEffect(() => {
     if (response?.data && extractions.length > 0 && isSuccessResponse) {
       const vars = variableExtractionService.extractVariables(response.data, extractions);
-      console.log('🔍 Extracting variables:', vars); // ← Debug log
+      console.log('🔍 Extracting variables:', vars);
+      
+      // Check for conflicts with existing variables
+      const conflicts: Array<{name: string; existingValue: any; newValue: any}> = [];
+      
+      Object.entries(vars).forEach(([name, newValue]) => {
+        if (chainVariables && chainVariables.hasOwnProperty(name)) {
+          const existingValue = chainVariables[name];
+          // Only consider it a conflict if values are different and new value is not undefined
+          if (newValue !== undefined && newValue !== existingValue) {
+            conflicts.push({ name, existingValue, newValue });
+          }
+        }
+      });
+      
+      if (conflicts.length > 0) {
+        // We have conflicts! Show modal for the first conflict
+        const firstConflict = conflicts[0];
+        console.log('⚠️ CONFLICT DETECTED during extraction:', firstConflict);
+        
+        // Find the extraction rule that caused this conflict
+        const conflictingExtraction = extractions.find(e => e.name === firstConflict.name);
+        
+        if (conflictingExtraction) {
+          setConflictModal({
+            show: true,
+            varName: firstConflict.name,
+            existingValue: firstConflict.existingValue,
+            newValue: firstConflict.newValue,
+            extraction: conflictingExtraction,
+            isAutoDetected: false,
+            fromAutoExtraction: true, // Flag that this came from automatic extraction
+            pendingVars: vars, // Store all the extracted vars for later use
+          });
+          
+          // Don't extract or call onExtract - wait for user decision
+          setExtractedVars({});
+          return;
+        }
+      }
+      
+      // No conflicts, proceed normally
       setExtractedVars(vars);
       onExtract(vars);
-      console.log('✅ Called onExtract with:', vars); // ← Debug log
+      console.log('✅ Called onExtract with:', vars);
     } else if (!isSuccessResponse && extractions.length > 0) {
       // Clear extracted vars for error responses
       console.log('⚠️ Skipping variable extraction - Error response (status:', response?.status, ')');
       setExtractedVars({});
     }
-  }, [extractions, response, isSuccessResponse]); // ← Removed onExtract to prevent infinite loop
+  }, [extractions, response, isSuccessResponse, chainVariables]); // Added chainVariables dependency
 
   // Helper function to check if a variable would conflict with an existing one
   const checkConflict = (varName: string, extraction: VariableExtraction): { hasConflict: boolean; existingValue: any; newValue: any } => {
@@ -146,6 +192,8 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
         newValue: conflict.newValue,
         extraction: { ...newExtraction },
         isAutoDetected: false,
+        fromAutoExtraction: false,
+        pendingVars: null,
       });
       return;
     }
@@ -177,6 +225,8 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
         newValue: conflict.newValue,
         extraction: extraction,
         isAutoDetected: true,
+        fromAutoExtraction: false,
+        pendingVars: null,
       });
       return;
     }
@@ -194,6 +244,8 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       newValue: null,
       extraction: null,
       isAutoDetected: false,
+      fromAutoExtraction: false,
+      pendingVars: null,
     });
   };
 
@@ -203,31 +255,56 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
 
     const suggestedName = getSuggestedName(conflictModal.varName);
     
-    // Pre-fill the custom extraction form with suggested name
-    setNewExtraction({
-      name: suggestedName,
-      path: conflictModal.extraction.path,
-      description: conflictModal.extraction.description || '',
-    });
+    if (conflictModal.fromAutoExtraction) {
+      // For automatic extraction conflicts, we need to:
+      // 1. Remove the old extraction rule (with conflicting name)
+      // 2. Add a new extraction rule with the suggested name
+      // 3. The extraction will happen automatically
+      
+      const updatedExtractions = extractions.filter(e => e.name !== conflictModal.varName);
+      const newExtraction = {
+        name: suggestedName,
+        path: conflictModal.extraction.path,
+        description: conflictModal.extraction.description || `Renamed from ${conflictModal.varName} to avoid conflict`,
+      };
+      
+      setExtractions([...updatedExtractions, newExtraction]);
+      console.log(`✅ Renamed extraction rule from '${conflictModal.varName}' to '${suggestedName}'`);
+      
+      // Close the modal - the extraction will happen automatically via the useEffect
+      handleConflictCancel();
+    } else {
+      // For manual additions, pre-fill the custom extraction form
+      setNewExtraction({
+        name: suggestedName,
+        path: conflictModal.extraction.path,
+        description: conflictModal.extraction.description || '',
+      });
 
-    // Close the modal
-    handleConflictCancel();
+      // Close the modal
+      handleConflictCancel();
 
-    // Scroll to the custom extraction section if needed
-    const customSection = document.querySelector('[data-custom-extraction]');
-    customSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // Scroll to the custom extraction section
+      const customSection = document.querySelector('[data-custom-extraction]');
+      customSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   };
 
   // Handle conflict resolution: Replace Anyway
   const handleConflictReplace = () => {
     if (!conflictModal.extraction) return;
 
-    // Add the extraction despite the conflict
-    if (conflictModal.isAutoDetected) {
-      // For auto-detected, just add it
+    // Check if this conflict came from automatic extraction (rule already exists)
+    if (conflictModal.fromAutoExtraction && conflictModal.pendingVars) {
+      // The extraction rule is already in place, just call onExtract with the pending vars
+      console.log('✅ User approved replacement, calling onExtract with:', conflictModal.pendingVars);
+      setExtractedVars(conflictModal.pendingVars);
+      onExtract(conflictModal.pendingVars);
+    } else if (conflictModal.isAutoDetected) {
+      // For auto-detected, add the extraction rule
       setExtractions([...extractions, conflictModal.extraction]);
     } else {
-      // For custom, add and clear the form
+      // For custom extraction, add the rule and clear the form
       setExtractions([...extractions, conflictModal.extraction]);
       setNewExtraction({ name: '', path: '', description: '' });
     }
