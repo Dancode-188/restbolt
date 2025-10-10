@@ -32,18 +32,28 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
     }
   }, [chainId, isOpen]);
 
-  const loadChain = async () => {
-    if (!chainId) return;
+  const loadChain = async (idToLoad?: string) => {
+    const targetId = idToLoad || chainId;
+    if (!targetId) {
+      console.log('⚠️ No chain ID to load');
+      return;
+    }
+    
+    console.log('🔄 Loading chain:', targetId);
     setIsLoading(true);
     try {
-      const loadedChain = await chainService.getChain(chainId);
+      const loadedChain = await chainService.getChain(targetId);
+      console.log('📦 Loaded chain:', loadedChain);
       if (loadedChain) {
         setChain(loadedChain);
         setChainName(loadedChain.name);
         setChainDescription(loadedChain.description || '');
+        console.log('✅ Chain state updated');
+      } else {
+        console.warn('⚠️ Chain not found in database');
       }
     } catch (error) {
-      console.error('Failed to load chain:', error);
+      console.error('❌ Failed to load chain:', error);
     } finally {
       setIsLoading(false);
     }
@@ -78,52 +88,73 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
   };
 
   const handleAddStep = async () => {
-    if (!chain) {
-      // Create chain first
-      const newChain = await chainService.createChain(
-        chainName || 'New Chain',
-        chainDescription
-      );
-      setChain(newChain);
+    console.log('🔵 handleAddStep called');
+    console.log('📋 Current chain:', chain);
+    console.log('📝 Chain name:', chainName);
+    
+    try {
+      if (!chain) {
+        console.log('🔨 Creating new chain first...');
+        
+        // Create chain first
+        const newChain = await chainService.createChain(
+          chainName || 'New Chain',
+          chainDescription
+        );
+        console.log('✅ Chain created:', newChain);
+        setChain(newChain);
 
-      // Add step
-      await chainService.addStep(newChain.id, {
-        name: 'New Step',
-        request: {
-          id: `request-${Date.now()}`,
-          name: 'New Request',
-          method: 'GET',
-          url: 'https://api.example.com',
-          headers: {},
-          params: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        variableExtractions: [],
-        continueOnError: false,
-      });
+        console.log('🔨 Adding step to new chain...');
+        // Add step
+        await chainService.addStep(newChain.id, {
+          name: 'New Step',
+          request: {
+            id: `request-${Date.now()}`,
+            name: 'New Request',
+            method: 'GET',
+            url: 'https://api.example.com',
+            headers: {},
+            params: {},
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          variableExtractions: [],
+          continueOnError: false,
+        });
+        console.log('✅ Step added');
 
-      // Reload
-      await loadChain();
-    } else {
-      // Add to existing chain
-      await chainService.addStep(chain.id, {
-        name: 'New Step',
-        request: {
-          id: `request-${Date.now()}`,
-          name: 'New Request',
-          method: 'GET',
-          url: 'https://api.example.com',
-          headers: {},
-          params: {},
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        variableExtractions: [],
-        continueOnError: false,
-      });
+        // Reload with the new chain ID
+        console.log('🔄 Reloading chain...');
+        await loadChain(newChain.id);
+        console.log('✅ Chain reloaded');
+      } else {
+        console.log('🔨 Adding step to existing chain...');
+        
+        // Add to existing chain
+        await chainService.addStep(chain.id, {
+          name: 'New Step',
+          request: {
+            id: `request-${Date.now()}`,
+            name: 'New Request',
+            method: 'GET',
+            url: 'https://api.example.com',
+            headers: {},
+            params: {},
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          variableExtractions: [],
+          continueOnError: false,
+        });
+        console.log('✅ Step added');
 
-      await loadChain();
+        console.log('🔄 Reloading chain...');
+        await loadChain(chain.id);
+        console.log('✅ Chain reloaded');
+      }
+    } catch (error) {
+      console.error('❌ Error in handleAddStep:', error);
+      alert(`Failed to add step: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -131,14 +162,24 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
     if (!chain) return;
     if (!confirm('Remove this step from the chain?')) return;
 
-    await chainService.removeStep(chain.id, stepId);
-    await loadChain();
+    try {
+      await chainService.removeStep(chain.id, stepId);
+      await loadChain(chain.id);
+    } catch (error) {
+      console.error('❌ Error removing step:', error);
+      alert(`Failed to remove step: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   const handleUpdateStep = async (stepId: string, updates: Partial<ChainStep>) => {
     if (!chain) return;
-    await chainService.updateStep(chain.id, stepId, updates);
-    await loadChain();
+    try {
+      await chainService.updateStep(chain.id, stepId, updates);
+      await loadChain(chain.id);
+    } catch (error) {
+      console.error('❌ Error updating step:', error);
+      alert(`Failed to update step: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   if (!isOpen) return null;
