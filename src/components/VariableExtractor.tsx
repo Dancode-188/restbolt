@@ -17,6 +17,9 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
   const [showExamples, setShowExamples] = useState(false);
   const [autoDetected, setAutoDetected] = useState<VariableExtraction[]>([]);
   
+  // Track which variables have been successfully extracted (for UI feedback)
+  const [extractedThisSession, setExtractedThisSession] = useState<Set<string>>(new Set());
+  
   // Conflict detection state
   const [conflictModal, setConflictModal] = useState<{
     show: boolean;
@@ -44,6 +47,9 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
   // Auto-detect variables on mount - ONLY for successful responses
   // Filter out variables that are already extracted
   useEffect(() => {
+    // Clear the extracted tracking when response changes (new response = new session)
+    setExtractedThisSession(new Set());
+    
     if (response?.data && isSuccessResponse) {
       const detected = variableExtractionService.autoDetectVariables(response.data);
       
@@ -117,9 +123,18 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       onExtract(vars);
       console.log('✅ Called onExtract with:', vars);
       
+      // Track which variables were successfully extracted (for UI feedback)
+      const successfulExtractions = Object.keys(vars).filter(key => vars[key] !== undefined);
+      if (successfulExtractions.length > 0) {
+        setExtractedThisSession(prev => {
+          const updated = new Set(prev);
+          successfulExtractions.forEach(name => updated.add(name));
+          return updated;
+        });
+      }
+      
       // AUTO-REMOVE: Remove extraction rules after successful extraction
       // This prevents rules from persisting and causing conflicts on future requests
-      const successfulExtractions = Object.keys(vars).filter(key => vars[key] !== undefined);
       if (successfulExtractions.length > 0) {
         const remainingExtractions = extractions.filter(
           extraction => !successfulExtractions.includes(extraction.name)
@@ -320,6 +335,13 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
       setExtractedVars(conflictModal.pendingVars);
       onExtract(conflictModal.pendingVars);
       
+      // Track the extracted variable for UI feedback
+      setExtractedThisSession(prev => {
+        const updated = new Set(prev);
+        updated.add(conflictModal.varName);
+        return updated;
+      });
+      
       // AUTO-REMOVE: Remove the rule after user approves replacement
       const updatedExtractions = extractions.filter(e => e.name !== conflictModal.varName);
       console.log('🧹 Auto-removing extraction rule:', conflictModal.varName);
@@ -387,22 +409,25 @@ export default function VariableExtractor({ response, onExtract }: VariableExtra
                   New Variables Detected
                 </h4>
             <div className="space-y-1">
-              {autoDetected.map((extraction, index) => (
-                <button
-                  key={index}
-                  onClick={() => addAutoDetected(extraction)}
-                  disabled={extractions.some(e => e.name === extraction.name)}
-                  className="w-full text-left p-2 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900 dark:text-gray-100">{extraction.name}</span>
-                    <span className="text-gray-500 dark:text-gray-500">
-                      {extractions.some(e => e.name === extraction.name) ? '✓ Added' : '+ Add'}
-                    </span>
-                  </div>
-                  <div className="text-gray-600 dark:text-gray-400 font-mono">{extraction.path}</div>
-                </button>
-              ))}
+              {autoDetected.map((extraction, index) => {
+                const isExtracted = extractedThisSession.has(extraction.name);
+                return (
+                  <button
+                    key={index}
+                    onClick={() => addAutoDetected(extraction)}
+                    disabled={isExtracted}
+                    className="w-full text-left p-2 rounded border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{extraction.name}</span>
+                      <span className="text-gray-500 dark:text-gray-500">
+                        {isExtracted ? '✓ Added' : '+ Add'}
+                      </span>
+                    </div>
+                    <div className="text-gray-600 dark:text-gray-400 font-mono">{extraction.path}</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
