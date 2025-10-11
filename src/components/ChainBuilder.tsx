@@ -33,6 +33,21 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
     jsonPath: '',
   });
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    confirmAction: () => void;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    confirmAction: () => {},
+  });
+
   // Debounce timers for auto-save
   const updateTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -207,15 +222,27 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
 
   const handleRemoveStep = async (stepId: string) => {
     if (!chain) return;
-    if (!confirm('Remove this step from the chain?')) return;
-
-    try {
-      await chainService.removeStep(chain.id, stepId);
-      await loadChain(chain.id);
-    } catch (error) {
-      console.error('❌ Error removing step:', error);
-      alert(`Failed to remove step: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    
+    const step = chain.steps.find(s => s.id === stepId);
+    const stepName = step?.name || 'this step';
+    
+    setConfirmModal({
+      show: true,
+      title: 'Remove Step',
+      message: `Are you sure you want to remove "${stepName}" from the chain?`,
+      confirmText: 'Remove',
+      confirmAction: async () => {
+        try {
+          await chainService.removeStep(chain.id, stepId);
+          await loadChain(chain.id);
+          setConfirmModal({ ...confirmModal, show: false });
+        } catch (error) {
+          console.error('❌ Error removing step:', error);
+          alert(`Failed to remove step: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          setConfirmModal({ ...confirmModal, show: false });
+        }
+      },
+    });
   };
 
   const handleUpdateStep = (stepId: string, updates: Partial<ChainStep>) => {
@@ -541,6 +568,37 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
                 className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
               >
                 Add Extraction
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              {confirmModal.title}
+            </h3>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              {confirmModal.message}
+            </p>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmModal.confirmAction}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+              >
+                {confirmModal.confirmText}
               </button>
             </div>
           </div>

@@ -20,6 +20,21 @@ export default function ChainManager() {
     status: string;
   } | null>(null);
 
+  // Confirmation modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    confirmAction: () => void;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    confirmAction: () => {},
+  });
+
   useEffect(() => {
     loadChains();
   }, []);
@@ -53,12 +68,20 @@ export default function ChainManager() {
   };
 
   const handleDeleteChain = async (chain: Chain) => {
-    if (!confirm(`Delete chain "${chain.name}"?`)) return;
-    await chainService.deleteChain(chain.id);
-    if (selectedChain?.id === chain.id) {
-      setSelectedChain(null);
-    }
-    await loadChains();
+    setConfirmModal({
+      show: true,
+      title: 'Delete Chain',
+      message: `Are you sure you want to delete "${chain.name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      confirmAction: async () => {
+        await chainService.deleteChain(chain.id);
+        if (selectedChain?.id === chain.id) {
+          setSelectedChain(null);
+        }
+        await loadChains();
+        setConfirmModal({ ...confirmModal, show: false });
+      },
+    });
   };
 
   const handleDuplicateChain = async (chain: Chain) => {
@@ -354,6 +377,37 @@ export default function ChainManager() {
         }}
         chainId={editingChainId}
       />
+
+      {/* Confirmation Modal */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+              {confirmModal.title}
+            </h3>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              {confirmModal.message}
+            </p>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => setConfirmModal({ ...confirmModal, show: false })}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmModal.confirmAction}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded transition-colors"
+              >
+                {confirmModal.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
