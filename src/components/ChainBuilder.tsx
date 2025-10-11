@@ -20,6 +20,19 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
   const [isSaving, setIsSaving] = useState(false);
   const [activeStepId, setActiveStepId] = useState<string | null>(null);
 
+  // Variable extraction modal state
+  const [extractionModal, setExtractionModal] = useState<{
+    show: boolean;
+    stepId: string | null;
+    variableName: string;
+    jsonPath: string;
+  }>({
+    show: false,
+    stepId: null,
+    variableName: '',
+    jsonPath: '',
+  });
+
   // Debounce timers for auto-save
   const updateTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -222,6 +235,44 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
     debouncedUpdateStep(chain.id, stepId, updates);
   };
 
+  const handleAddVariableExtraction = () => {
+    if (!chain || !extractionModal.stepId) return;
+    
+    const { stepId, variableName, jsonPath } = extractionModal;
+    
+    if (!variableName.trim() || !jsonPath.trim()) {
+      alert('Please enter both variable name and JSONPath');
+      return;
+    }
+
+    const step = chain.steps.find(s => s.id === stepId);
+    if (!step) return;
+
+    handleUpdateStep(stepId, {
+      variableExtractions: [
+        ...step.variableExtractions,
+        { name: variableName.trim(), path: jsonPath.trim() }
+      ]
+    });
+
+    // Close modal and reset
+    setExtractionModal({
+      show: false,
+      stepId: null,
+      variableName: '',
+      jsonPath: '',
+    });
+  };
+
+  const handleCancelExtraction = () => {
+    setExtractionModal({
+      show: false,
+      stepId: null,
+      variableName: '',
+      jsonPath: '',
+    });
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -329,16 +380,12 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
                               </span>
                               <button
                                 onClick={() => {
-                                  const name = prompt('Variable name:');
-                                  const path = prompt('JSONPath (e.g., $.data.id):');
-                                  if (name && path) {
-                                    handleUpdateStep(step.id, {
-                                      variableExtractions: [
-                                        ...step.variableExtractions,
-                                        { name, path }
-                                      ]
-                                    });
-                                  }
+                                  setExtractionModal({
+                                    show: true,
+                                    stepId: step.id,
+                                    variableName: '',
+                                    jsonPath: '$.id',
+                                  });
                                 }}
                                 className="text-blue-600 dark:text-blue-400 hover:underline"
                               >
@@ -438,6 +485,67 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
           )}
         </div>
       </div>
+
+      {/* Variable Extraction Modal */}
+      {extractionModal.show && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+              Add Variable Extraction
+            </h3>
+            
+            <div className="space-y-4">
+              {/* Variable Name Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Variable Name
+                </label>
+                <input
+                  type="text"
+                  value={extractionModal.variableName}
+                  onChange={(e) => setExtractionModal({ ...extractionModal, variableName: e.target.value })}
+                  placeholder="e.g., userId, postId, commentId"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+              </div>
+
+              {/* JSONPath Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  JSONPath
+                </label>
+                <input
+                  type="text"
+                  value={extractionModal.jsonPath}
+                  onChange={(e) => setExtractionModal({ ...extractionModal, jsonPath: e.target.value })}
+                  placeholder="e.g., $.id, $.data.user.id"
+                  className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-gray-100 placeholder-gray-400 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Use JSONPath syntax to extract values from the response
+                </p>
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={handleCancelExtraction}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddVariableExtraction}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+              >
+                Add Extraction
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
