@@ -251,7 +251,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 - **Issues:** [GitHub Issues](https://github.com/Dancode-188/restbolt/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/Dancode-188/restbolt/discussions)
-- **Email:** dancode.188@gmail.com (replace with your email if you want)
+- **Email:** danbitengo@gmail.com
 
 ---
 
