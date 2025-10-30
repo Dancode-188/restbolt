@@ -1,16 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
-import { HttpClient } from '../http-client';
+import { httpClient } from '../http-client';
 
 // Mock axios
 vi.mock('axios');
 const mockedAxios = vi.mocked(axios);
 
 describe('HttpClient', () => {
-  let httpClient: HttpClient;
+  // let httpClient: HttpClient;
 
   beforeEach(() => {
-    httpClient = new HttpClient();
+    // httpClient = new HttpClient();
     vi.clearAllMocks();
   });
 
