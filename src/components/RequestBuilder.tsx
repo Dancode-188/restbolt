@@ -501,7 +501,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
           Request Builder
         </h2>
         
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value as typeof method)}
@@ -520,7 +520,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://api.example.com/endpoint"
-            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+            className="flex-1 min-w-[300px] px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 handleSend();
