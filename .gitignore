@@ -144,3 +144,10 @@ vite.config.ts.timestamp-*
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Internal development docs (not for Git)
+ANALYSIS_AND_RECOMMENDATIONS.md
+ACTION_PLAN.md
+NEXT_STEPS.md
+CONTRIBUTOR_SUMMARY.md
+TODO_NOW.md
