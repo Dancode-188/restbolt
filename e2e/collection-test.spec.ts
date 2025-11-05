@@ -16,4 +16,5 @@ test('check creation of new collection', async ({page}) => {
     await page.getByRole('button', {name:'New Test Collection 0 requests'}).click()
     await page.getByRole('button', { name: '▶ New Test Collection (1)' }).click()
     await expect(page.getByText('Post 1')).toBeVisible()
+
 })
