@@ -112,34 +112,6 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
     };
   }, []);
 
-  // Flush all pending saves immediately before reload
-  const flushPendingSaves = async () => {
-    const promises: Promise<void>[] = [];
-    
-    updateTimers.current.forEach((timer, stepId) => {
-      clearTimeout(timer);
-      
-      const step = chain?.steps.find(s => s.id === stepId);
-      if (step && chain) {
-        console.log('💾 Flushing pending save for step:', stepId);
-        promises.push(
-          chainService.updateStep(chain.id, stepId, step)
-            .catch(error => {
-              console.error(`❌ Failed to flush save for step ${stepId}:`, error);
-            })
-        );
-      }
-    });
-    
-    updateTimers.current.clear();
-    
-    if (promises.length > 0) {
-      console.log(`⏳ Flushing ${promises.length} pending save(s)...`);
-      await Promise.allSettled(promises);
-      console.log('✅ All pending saves flushed');
-    }
-  };
-
   // Load chain if editing
   useEffect(() => {
     if (chainId && isOpen) {
