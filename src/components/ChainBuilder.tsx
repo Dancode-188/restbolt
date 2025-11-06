@@ -74,6 +74,36 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
     updateTimers.current.set(stepId, newTimerId);
   }, []);
 
+  // Flush all pending saves to database immediately
+  // Prevents race condition where reload happens before debounced saves complete
+  const flushPendingSaves = useCallback(async () => {
+    const promises: Promise<void>[] = [];
+    
+    updateTimers.current.forEach((timer, stepId) => {
+      clearTimeout(timer);
+      
+      const step = chain?.steps.find(s => s.id === stepId);
+      if (step && chain) {
+        console.log('💾 Flushing pending save for step:', stepId);
+        promises.push(
+          chainService.updateStep(chain.id, stepId, step)
+            .catch(error => {
+              console.error(`❌ Failed to flush save for step ${stepId}:`, error);
+              // Don't let one failure block others
+            })
+        );
+      }
+    });
+    
+    updateTimers.current.clear();
+    
+    if (promises.length > 0) {
+      console.log(`⏳ Flushing ${promises.length} pending save(s)...`);
+      await Promise.allSettled(promises);
+      console.log('✅ All pending saves flushed');
+    }
+  }, [chain]);
+
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
@@ -81,6 +111,34 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
       updateTimers.current.clear();
     };
   }, []);
+
+  // Flush all pending saves immediately before reload
+  const flushPendingSaves = async () => {
+    const promises: Promise<void>[] = [];
+    
+    updateTimers.current.forEach((timer, stepId) => {
+      clearTimeout(timer);
+      
+      const step = chain?.steps.find(s => s.id === stepId);
+      if (step && chain) {
+        console.log('💾 Flushing pending save for step:', stepId);
+        promises.push(
+          chainService.updateStep(chain.id, stepId, step)
+            .catch(error => {
+              console.error(`❌ Failed to flush save for step ${stepId}:`, error);
+            })
+        );
+      }
+    });
+    
+    updateTimers.current.clear();
+    
+    if (promises.length > 0) {
+      console.log(`⏳ Flushing ${promises.length} pending save(s)...`);
+      await Promise.allSettled(promises);
+      console.log('✅ All pending saves flushed');
+    }
+  };
 
   // Load chain if editing
   useEffect(() => {
@@ -192,6 +250,10 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
       } else {
         console.log('🔨 Adding step to existing chain...');
         
+        // Flush any pending saves before adding step to prevent race condition
+        // This ensures all edits to existing steps are saved before reload
+        await flushPendingSaves();
+        
         // Add to existing chain
         await chainService.addStep(chain.id, {
           name: 'New Step',
@@ -233,6 +295,9 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
       confirmText: 'Remove',
       confirmAction: async () => {
         try {
+          // Flush pending saves before removing to preserve any unsaved changes to other steps
+          await flushPendingSaves();
+          
           await chainService.removeStep(chain.id, stepId);
           await loadChain(chain.id);
           setConfirmModal({ ...confirmModal, show: false });
