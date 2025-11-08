@@ -1,5 +1,4 @@
-import {test, type Locator, type Page} from '@playwright/test'
-import { promises } from 'dns'
+import {type Locator, type Page} from '@playwright/test'
 
 export class ChainModel {
 
