@@ -1,5 +1,13 @@
 import {type Locator, type Page} from '@playwright/test'
 
+export interface Parent {
+     page : Page
+}
+
+export function  buttonFn(this : Parent, btnName:string):Locator {
+               //only use this function inside a class with this.page
+                return this.page.getByRole('button', {name : btnName})
+         }
 export class ChainModel {
 
         page : Page
@@ -12,15 +20,13 @@ export class ChainModel {
         extractAdd: Locator
         extractKey: Locator
         extractSave : Locator
-        button : Function 
+        button: Function
         fillBlock: Function
 
     constructor(page:Page) {
 
          this.page = page
-         this.button = function (btnName:string):Locator {
-                return this.page.getByRole('button', {name : btnName})
-         }
+         this.button =buttonFn.bind(this)
 
          this.fillBlock = function (input:string):Locator {
                 return page.getByPlaceholder(input)
@@ -36,6 +42,8 @@ export class ChainModel {
          this.extractKey = this.fillBlock('e.g., userId, postId, commentId')
          this.extractSave= this.button('Add Extraction')
     }
+
+
 
     async addNewChain(chainName:string) {
          await this.chainSection.click()
