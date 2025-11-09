@@ -1,20 +1,25 @@
 import {test, expect } from '@playwright/test'
+import { CollectionModel } from './object-models/collection-model'
+import { APImodel } from './object-models/api-model'
 
 test('check creation of new collection', async ({page}) => {
     await page.goto("/")
-    await page.getByRole('button',{name: 'Collections'}).click()
-    await page.getByRole('button', {name: '+ New'}).click()
-    await page.getByPlaceholder('Collection name').fill('New Test Collection')
-    await page.getByRole('button',{name: 'Create'}).click()
-    await expect(page.getByText('New Test Collection')).toBeVisible()
-    //can use object model here
-    await page.getByPlaceholder('https://api.example.com/endpoint').fill('https://jsonplaceholder.typicode.com/todos/1')
-    await page.getByRole('button', {name:'Send'}).click()
-    await page.getByTitle('Save to collection').click()
-    await page.getByPlaceholder('GET https://jsonplaceholder.typicode.com/todos/1')
-              .fill('Post 1')
-    await page.getByRole('button', {name:'New Test Collection 0 requests'}).click()
-    await page.getByRole('button', { name: '▶ New Test Collection (1)' }).click()
-    await expect(page.getByText('Post 1')).toBeVisible()
     
+    //1. make new collection
+    const collect = new CollectionModel(page)
+    await collect.createCollection('New Test Collection')
+    await expect(page.getByText('New Test Collection')).toBeVisible()
+
+    //2. create a new request for collection
+    const request = new APImodel(page)
+    await request.get('https://jsonplaceholder.typicode.com/todos/1')
+
+    //3. Save the request to collection
+    await collect.saveToCollection('Post 1', 'New Test Collection')
+
+    //4. Check if the request got saved in the collection
+    await page.locator('div')
+              .filter({has: page.getByTitle('Delete collection')})
+              .getByRole('button',{name:'New Test Collection'}).click()
+    await expect(page.getByText('Post 1')).toBeVisible()
 })
