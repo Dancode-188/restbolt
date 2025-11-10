@@ -74,8 +74,10 @@ export class ChainModel {
                         .filter({has:step})
                         .filter({has:execute})
                         .last()
+        await this.page.waitForTimeout(500)
         await filteredDiv.getByRole('button', {name :'Execute'}).click()
         await filteredDiv.getByRole('button', {name : 'View Execution'}).click()
+        await filteredDiv.getByText('COMPLETED').waitFor({state:'attached'})
         return await filteredDiv.getByText('COMPLETED')
         
     }

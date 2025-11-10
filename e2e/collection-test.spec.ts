@@ -4,7 +4,7 @@ import { APImodel } from './object-models/api-model'
 
 test('check creation of new collection', async ({page}) => {
     await page.goto("/")
-    
+
     //1. make new collection
     const collect = new CollectionModel(page)
     await collect.createCollection('New Test Collection')
@@ -20,6 +20,7 @@ test('check creation of new collection', async ({page}) => {
     //4. Check if the request got saved in the collection
     await page.locator('div')
               .filter({has: page.getByTitle('Delete collection')})
-              .getByRole('button',{name:'New Test Collection'}).click()
+            //   .filter({hasText: '▼'}).last().click()
+            .getByRole('button').filter({hasText:'New Test Collection'}).click()
     await expect(page.getByText('Post 1')).toBeVisible()
 })
