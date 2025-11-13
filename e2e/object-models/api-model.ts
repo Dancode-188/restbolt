@@ -34,22 +34,26 @@ export class APImodel {
     async post(url: string, data : string) {
         await this.fillUrl.fill(url)
         await this.reqType.selectOption('POST')
-        await this.reqBody.clear()
-        await this.reqBody.clear()
-        await this.reqBody.fill(data)
+        await this.fillRequestBody(data)
         await this.sendBtn.click()
-        let result = await this.responseBody.textContent()
-        result = result.replace(/\u00A0/g, ' ')
-        return result
+        return await this.getResponseResult()
     }
 
     async patch(url: string, data: string) {
         await this.fillUrl.fill(url)
         await this.reqType.selectOption('PATCH')
+        await this.fillRequestBody(data)
+        await this.sendBtn.click()
+        return await this.getResponseResult()
+    }
+
+    private async fillRequestBody (data) {
         await this.reqBody.clear()
         await this.reqBody.clear()
         await this.reqBody.fill(data)
-        await this.sendBtn.click()
+    }
+
+    private async getResponseResult() {
         let result = await this.responseBody.textContent()
         result = result.replace(/\u00A0/g, ' ')
         return result

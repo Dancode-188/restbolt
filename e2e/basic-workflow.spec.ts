@@ -11,7 +11,7 @@ test('checking for basic workflow functionality', async ({page}) => {
   expect(result).toContain('"title"')
 })
 
-test('post checking for post request', async ({page}) => {
+test('post checking for postt request', async ({page}) => {
   await page.goto('/')
   const api = new APImodel(page)
   const result = await api.post('https://jsonplaceholder.typicode.com/posts', postData)
@@ -20,7 +20,7 @@ test('post checking for post request', async ({page}) => {
   await expect(result).toContain('"body": "bar"')
 })
 
-test('patch checking for put request', async ({page}) =>{
+test('checking for patch request', async ({page}) =>{
   await page.goto('/')
   const api = new APImodel(page)
   const result = await api.patch('https://jsonplaceholder.typicode.com/posts/1', patchData)
