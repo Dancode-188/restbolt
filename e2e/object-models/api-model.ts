@@ -47,7 +47,7 @@ export class APImodel {
         return await this.getResponseResult()
     }
 
-    private async fillRequestBody (data) {
+    private async fillRequestBody (data: string) {
         await this.reqBody.clear()
         await this.reqBody.clear()
         await this.reqBody.fill(data)
