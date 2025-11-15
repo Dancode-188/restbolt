@@ -51,32 +51,31 @@ export class ChainModel {
           await this.button('Save').nth(0).click()
      }
 
-     async execute(collName: string): Promise<Locator> {
-          const collDiv = await this.getCollection(collName)
-          await this.page.waitForTimeout(500)
-          await collDiv.getByRole('button', { name: 'Execute' }).click()
-          await collDiv.getByRole('button', { name: 'View Execution' }).click()
-          await collDiv.getByText('COMPLETED').waitFor({ state: 'attached' })
-          return await collDiv.getByText('COMPLETED')
+     async execute(chainName: string): Promise<Locator> {
+          const chainDiv = await this.getCollection(chainName)
+          await chainDiv.getByRole('button', { name: 'Execute' }).click()
+          await chainDiv.getByRole('button', { name: 'View Execution' }).click()
+          await chainDiv.getByText('COMPLETED').waitFor({ state: 'attached' })
+          return await chainDiv.getByText('COMPLETED')
      }
 
-     async delete(collNam: string) {
-          const collDIv= await this.getCollection(collNam)
-          await collDIv.getByRole('button', {name:'Delete'}).click()
+     async delete(chainNam: string) {
+          const chainDiv= await this.getCollection(chainNam)
+          await chainDiv.getByRole('button', {name:'Delete'}).click()
           await this.page.locator('div',
-               {hasText:`you want to delete "${collNam}"?`})
+               {hasText:`you want to delete "${chainNam}"?`})
                .last()
                .getByRole('button',{name: 'Delete'}).click()
      }
 
-     async getCollection(collName: string): Promise<Locator> {
-          const coll    = await this.page.getByText(collName, {exact: true})
+     async getCollection(chainName: string): Promise<Locator> {
+          const chain    = await this.page.getByText(chainName, {exact: true})
           const execute = await this.page.getByRole('button', { name: 'Execute' })
-          const collDiv = await this.page.locator('div')
-               .filter({ has: coll })
+          const chainDiv = await this.page.locator('div')
+               .filter({ has: chain })
                .filter({ has: execute })
                .last()
-          return collDiv
+          return chainDiv
      }
 }
 

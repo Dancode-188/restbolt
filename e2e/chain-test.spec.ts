@@ -1,7 +1,5 @@
 import {expect, test} from '@playwright/test'
 import { ChainModel } from './object-models/chain-object'
-import { channel } from 'diagnostics_channel'
-
 
 
 test('checking chain execution', async ({page}) => {
