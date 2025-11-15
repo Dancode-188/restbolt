@@ -69,7 +69,7 @@ export default function ChainBuilder({ isOpen, onClose, chainId }: ChainBuilderP
         console.error('❌ Error saving step:', error);
       }
       updateTimers.current.delete(stepId);
-    }, 500);
+    }, 50);
 
     updateTimers.current.set(stepId, newTimerId);
   }, []);

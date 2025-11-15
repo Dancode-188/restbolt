@@ -1,20 +1,21 @@
-import {test, expect } from '@playwright/test'
+import {test, expect} from './fixtures/collection' 
 
-test('check creation of new collection', async ({page}) => {
+test('check creation of new collection', async ({collection, apiReq ,page}) => {
     await page.goto("/")
-    await page.getByRole('button',{name: 'Collections'}).click()
-    await page.getByRole('button', {name: '+ New'}).click()
-    await page.getByPlaceholder('Collection name').fill('New Test Collection')
-    await page.getByRole('button',{name: 'Create'}).click()
+
+    //1. make new collection
+    await collection.createCollection('New Test Collection')
     await expect(page.getByText('New Test Collection')).toBeVisible()
-    //can use object model here
-    await page.getByPlaceholder('https://api.example.com/endpoint').fill('https://jsonplaceholder.typicode.com/todos/1')
-    await page.getByRole('button', {name:'Send'}).click()
-    await page.getByTitle('Save to collection').click()
-    await page.getByPlaceholder('GET https://jsonplaceholder.typicode.com/todos/1')
-              .fill('Post 1')
-    await page.getByRole('button', {name:'New Test Collection 0 requests'}).click()
-    await page.getByRole('button', { name: '▶ New Test Collection (1)' }).click()
+
+    //2. create a new request for collection
+    await apiReq.get('https://jsonplaceholder.typicode.com/todos/1')
+
+    //3. Save the request to collection
+    await collection.saveToCollection('Post 1', 'New Test Collection')
+
+    //4. Check if the request got saved in the collection
+    await page.locator('div')
+              .filter({has: page.getByTitle('Delete collection')})
+              .getByRole('button').filter({hasText:'New Test Collection'}).click()
     await expect(page.getByText('Post 1')).toBeVisible()
-    
 })
