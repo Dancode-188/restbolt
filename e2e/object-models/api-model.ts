@@ -16,9 +16,9 @@ export class APImodel {
     async get(url:string):Promise<string> 
     {
         await this.fillUrl.fill(url)
+        
         await this.reqType.selectOption('GET')
         await this.sendBtn.click()
-        await this.page.waitForLoadState('load')
         let result = await this.responseBody.textContent()
         result = result.replace(/\u00A0/g, ' ')
         return result
@@ -51,6 +51,7 @@ export class APImodel {
 
     private async getResponseResult() 
     {
+        await this.page.waitForLoadState('domcontentloaded')
         let result = await this.responseBody.textContent()
         result = result.replace(/\u00A0/g, ' ')
         return result
