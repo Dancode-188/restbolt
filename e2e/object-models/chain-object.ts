@@ -10,38 +10,22 @@ export function buttonFn(this: Parent, btnName: string): Locator {
 }
 export class ChainModel {
 
-     page: Page
-     chainSection: Locator
-     newChainAdd: Locator
-     chainName: Locator
-     addStep: Locator
-     stepName: Locator
-     stepUrl: Locator
-     extractAdd: Locator
-     extractKey: Locator
-     extractSave: Locator
-     button: Function
-     fillBlock: Function
+     constructor(readonly page: Page) {}
+          button       : Function = buttonFn.bind(this)
 
-     constructor(page: Page) {
-
-          this.page = page
-          this.button = buttonFn.bind(this)
-
-          this.fillBlock = function (input: string): Locator {
-               return page.getByPlaceholder(input)
+          fillBlock    : Function = function (this: ChainModel ,input: string): Locator {
+               return this.page.getByPlaceholder(input)
           }
-          this.chainSection = this.button('Chains')
-          this.newChainAdd = this.button('New Chain')
-          this.chainName = this.fillBlock('Chain Name')
-
-          this.addStep = this.button('Add Step')
-          this.stepName = this.fillBlock('Step name')
-          this.stepUrl = this.fillBlock('https://api.example.com/endpoint')
-          this.extractAdd = this.button('+ Add')
-          this.extractKey = this.fillBlock('e.g., userId, postId, commentId')
-          this.extractSave = this.button('Add Extraction')
-     }
+          chainSection : Locator  = this.button('Chains')
+          newChainAdd  : Locator  = this.button('New Chain')
+          chainName    : Locator  = this.fillBlock('Chain Name')
+ 
+          addStep      : Locator  = this.button('Add Step')
+          stepName     : Locator  = this.fillBlock('Step name')
+          stepUrl      : Locator  = this.fillBlock('https://api.example.com/endpoint')
+          extractAdd   : Locator  = this.button('+ Add')
+          extractKey   : Locator  = this.fillBlock('e.g., userId, postId, commentId')
+          extractSave  : Locator  = this.button('Add Extraction')
 
 
 
@@ -86,7 +70,7 @@ export class ChainModel {
      }
 
      async getCollection(collName: string): Promise<Locator> {
-          const coll = await this.page.getByText(collName, {exact: true})
+          const coll    = await this.page.getByText(collName, {exact: true})
           const execute = await this.page.getByRole('button', { name: 'Execute' })
           const collDiv = await this.page.locator('div')
                .filter({ has: coll })
