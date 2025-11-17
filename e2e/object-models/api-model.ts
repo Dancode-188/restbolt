@@ -55,6 +55,7 @@ export class APImodel {
     }
 
     private async getResponseResult() {
+        await this.page.waitForLoadState('domcontentloaded')
         let result = await this.responseBody.textContent()
         result = result.replace(/\u00A0/g, ' ')
         return result
