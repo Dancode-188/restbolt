@@ -1,5 +1,4 @@
 import {test, type Locator, type Page} from '@playwright/test'
-import { promises } from 'dns'
 
 export class ChainModel {
 
