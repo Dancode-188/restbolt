@@ -51,9 +51,9 @@ export class APImodel {
 
     private async getResponseResult() 
     {
-        await this.page.waitForLoadState('networkidle')
+        await this.page.waitForLoadState('domcontentloaded')
         let result = await this.responseBody.textContent()
-        result = await result.replace(/\u00A0/g, ' ')
+        result = result.replace(/\u00A0/g, ' ')
         return result
     }
     
