@@ -24,7 +24,7 @@ export default defineConfig({
   reporter: 'html',
 
   use: {
-    baseURL: getenv('BASE_URL'),
+    baseURL: process.env.CI? 'http://localhost:3000': getenv('BASE_URL'),
     trace: 'on-first-retry',
   },
 
@@ -35,7 +35,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run dev',
-    url: getenv('BASE_URL'),
+    url: process.env.CI ? 'http://localhost:3000' : getenv('BASE_URL'),
     reuseExistingServer: !process.env.CI,
   },
 });
