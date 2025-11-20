@@ -10,8 +10,9 @@ export class APImodel {
                                                          .getByRole('presentation')
         reqType      : Locator = this.page.getByRole('combobox')
         reqBody      : Locator = this.page.locator('div',{hasText:'Request Body (JSON)',
-                                                has: this.page.getByRole('presentation')}).last()
-                                .getByRole('textbox') 
+                                                has: this.page.getByRole('presentation')})
+                                            .last()
+                                            .getByRole('textbox') 
 
     async get(url:string):Promise<string> 
     {
@@ -46,14 +47,17 @@ export class APImodel {
     {
         await this.reqBody.clear()
         await this.reqBody.clear()
+        await this.reqBody.clear()
         await this.reqBody.fill(data)
     }
 
     private async getResponseResult() 
     {
         await this.page.waitForLoadState('domcontentloaded')
+        await this.responseBody.locator('.view-line').last().textContent()
         let result = await this.responseBody.textContent()
         result = result.replace(/\u00A0/g, ' ')
+        console.log('this is the result ===>', result)
         return result
     }
     
