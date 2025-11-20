@@ -1,21 +1,14 @@
-import { type Locator, type Page } from '@playwright/test'
+import { BasePage } from './BasePage'
+import type{Page, Locator} from '@playwright/test'
 
-export interface Parent {
-     page: Page
-}
 
-export function buttonFn(this: Parent, btnName: string): Locator {
-     //only use this function inside a class with this.page
-     return this.page.getByRole('button', { name: btnName })
-}
-export class ChainModel {
+export class ChainModel extends BasePage {
 
-     constructor(readonly page: Page) {}
-          button       : Function = buttonFn.bind(this)
+     constructor(page: Page) {
+          super(page)
+     }
 
-          fillBlock    : Function = function (this: ChainModel ,input: string): Locator {
-               return this.page.getByPlaceholder(input)
-          }
+          
           chainSection : Locator  = this.button('Chains')
           newChainAdd  : Locator  = this.button('New Chain')
           chainName    : Locator  = this.fillBlock('Chain Name')

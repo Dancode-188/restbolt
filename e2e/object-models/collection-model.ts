@@ -1,12 +1,13 @@
 import { test, type Page, type Locator } from '@playwright/test'
-import { buttonFn } from './chain-object'
+import { BasePage } from './BasePage'
 
 
-export class CollectionModel {
+export class CollectionModel extends BasePage {
 
-    constructor(readonly page: Page) {}
-
-    protected button: Function = buttonFn.bind(this)
+    constructor(page: Page) {
+        super(page)
+    }
+    
 
     async createCollection(colName: string) 
     {

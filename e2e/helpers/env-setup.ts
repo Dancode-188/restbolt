@@ -1,6 +1,9 @@
 import { devices } from '@playwright/test'
 import dotenv from 'dotenv'
-dotenv.config({path: './e2e/.env'})
+dotenv.config({
+  path: './e2e/.env',
+  quiet: true
+})
 
 export function getenv(name:string):string{
     const param = process.env[name]

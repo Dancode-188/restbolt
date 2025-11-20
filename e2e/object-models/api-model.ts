@@ -57,7 +57,6 @@ export class APImodel extends  BasePage {
         await this.responseBody.locator('.view-line').last().textContent()
         let result = await this.responseBody.textContent()
         result = result.replace(/\u00A0/g, ' ')
-        console.log('this is the result ===>', result)
         return result
     }
     
