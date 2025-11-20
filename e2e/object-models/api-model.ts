@@ -1,8 +1,12 @@
 import {type Page, type Locator} from '@playwright/test'
+import { BasePage } from './BasePage'
 
-export class APImodel {
+export class APImodel extends  BasePage {
 
-    constructor(protected page:Page) {}
+    constructor(page:Page) 
+        {super(page)
+        }
+
         fillUrl      : Locator = this.page.getByPlaceholder('https://api.example.com/endpoint')
         sendBtn      : Locator = this.page.getByRole('button', {name:'Send'})
         responseBody : Locator = this.page.locator('div').filter({hasText:'Body'}) 
@@ -20,9 +24,7 @@ export class APImodel {
         
         await this.reqType.selectOption('GET')
         await this.sendBtn.click()
-        let result = await this.responseBody.textContent()
-        result = result.replace(/\u00A0/g, ' ')
-        return result
+        return await this.getResponseResult()
     }
 
     async post(url: string, data : string) 
@@ -45,9 +47,7 @@ export class APImodel {
 
     private async fillRequestBody (data: string) 
     {
-        await this.reqBody.clear()
-        await this.reqBody.clear()
-        await this.reqBody.clear()
+        await this.clearall(this.reqBody)
         await this.reqBody.fill(data)
     }
 

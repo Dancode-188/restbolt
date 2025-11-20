@@ -1,30 +1,24 @@
-import { test, expect } from '@playwright/test';
-import { APImodel } from './object-models/api-model';
+import { test, expect } from './fixtures/api.fixture'
 
 
-test('checking for basic workflow functionality', async ({page}) => {
+test('checking for basic workflow functionality', async ({api, page}) => {
   await page.goto('/')
-  const api = new APImodel(page)
   let result = await api.get('https://jsonplaceholder.typicode.com/todos/1')
   expect(result).toContain('"userId": 1')
   expect(result).toContain('"id": 1')
   expect(result).toContain('"title"')
 })
 
-test('post checking for postt request', async ({page}) => {
+test('post checking for postt request', async ({api,page}) => {
   await page.goto('/')
-  const api = new APImodel(page)
   const result = await api.post('https://jsonplaceholder.typicode.com/posts', postData)
-  console.log(result )
   await expect(result).toContain('"title": "foo"')
   await expect(result).toContain('"body": "bar"')
 })
 
-test('checking for patch request', async ({page}) =>{
+test('checking for patch request', async ({api, page}) =>{
   await page.goto('/')
-  const api = new APImodel(page)
   const result = await api.patch('https://jsonplaceholder.typicode.com/posts/1', patchData)
-  console.log(result)
   await expect(result).toContain('"title": "foo"')
   await expect(result).toContain('"id": 1')
 })
