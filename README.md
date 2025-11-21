@@ -223,7 +223,7 @@ Contributions are welcome! Here's how you can help:
 
 ```bash
 # Fork and clone the repo
-git clone https://github.com/YOUR_USERNAME/restbolt.git
+git clone https://github.com/Dancode-188/restbolt.git
 cd restbolt
 
 # Install dependencies
