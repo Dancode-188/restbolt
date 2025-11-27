@@ -16,6 +16,7 @@ import CodeGenerationModal from './CodeGenerationModal';
 import VariablesPanel from './VariablesPanel';
 import WebSocketPanel from './WebSocketPanel';
 import { scriptingService, ScriptResult } from '@/lib/scripting-service';
+import { isValidUrl, shouldShowUrlError } from '@/lib/url-validator';
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'] as const;
 const METHODS_WITH_BODY = ['POST', 'PUT', 'PATCH'];
@@ -72,6 +73,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
 
   // Derived state - must be before hooks that use it
   const hasBody = METHODS_WITH_BODY.includes(method);
+  const showUrlValidationError = shouldShowUrlError(url);
 
   // Load saved WebSocket panel height from localStorage
   useEffect(() => {
@@ -211,7 +213,11 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
           url,
           headers,
           body,
-          name: url ? `${method} ${new URL(url).pathname}` : 'New Request',
+          name: url && isValidUrl(url)
+            ? `${method} ${new URL(url).pathname}`
+            : url
+              ? `${method} ${url}`
+              : 'New Request',
         });
       }
     }
@@ -507,34 +513,46 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
           Request Builder
         </h2>
         
-        <div className="flex flex-wrap gap-2">
-          <select
-            value={method}
-            onChange={(e) => setMethod(e.target.value as typeof method)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-medium"
-          >
-            {HTTP_METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-          
-          <input
-            ref={urlInputRef}
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://api.example.com/endpoint"
-            className="flex-1 min-w-[300px] px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                handleSend();
-              }
-            }}
-          />
-          
-          <button
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value as typeof method)}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-medium"
+            >
+              {HTTP_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex-1 min-w-[300px]">
+              <input
+                ref={urlInputRef}
+                type="text"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://api.example.com/endpoint"
+                className={`w-full px-3 py-2 border rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors ${
+                  showUrlValidationError
+                    ? 'border-red-500 dark:border-red-500 focus:ring-2 focus:ring-red-500'
+                    : 'border-gray-300 dark:border-gray-700'
+                }`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    handleSend();
+                  }
+                }}
+              />
+              {showUrlValidationError && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  Please enter a valid HTTP(S) URL
+                </p>
+              )}
+            </div>
+
+            <button
             onClick={handleSend}
             disabled={loading || !url.trim()}
             className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
@@ -562,6 +580,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
           >
             Save
           </button>
+          </div>
         </div>
 
         {/* Save to Collection Dialog */}
