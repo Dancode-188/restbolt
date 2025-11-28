@@ -1,9 +1,17 @@
 import {type Page, Locator} from '@playwright/test'
 
-
-
 export class BasePage {
-    constructor(protected page:Page) {}
+    constructor(protected page:Page) {
+    
+    if (process.env.THROTLE) {
+    (async () => {
+        const context = this.page.context();
+        const cdpSession = await context.newCDPSession(this.page);
+        await cdpSession.send('Emulation.setCPUThrottlingRate', { rate: 6 });
+        
+                 })()
+        }
+    }
 
     protected button(btnName: string): Locator
     {
