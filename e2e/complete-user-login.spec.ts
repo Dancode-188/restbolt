@@ -1,6 +1,5 @@
 import {test, expect} from './fixtures/collection.fixure'
 
-
 const postData1: string = '{ "email": "eve.holt@reqres.in", "password": "cityslicka" }'
 const postData2: string = '{ "name": "morpheus", "job": "leader"}'
 const testData1 : string = `const varb = pm.response.json()
