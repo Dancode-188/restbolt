@@ -1,30 +1,31 @@
-import { test, expect } from './fixtures/api.fixture'
+import { test, expect } from './fixtures/collection.fixure'
 
 
-test('checking for basic workflow functionality', async ({api, page}) => {
+test('checking for basic workflow functionality', async ({apiReq, page}) => {
   await page.goto('/')
-  let result = await api.get('https://jsonplaceholder.typicode.com/todos/1')
+  await apiReq.get('https://jsonplaceholder.typicode.com/todos/1')
+  let result = await apiReq.getResponseResult()
   expect(result).toContain('"userId": 1')
   expect(result).toContain('"id": 1')
   expect(result).toContain('"title"')
 })
 
-test('post checking for postt request', async ({api,page}) => {
+test('post checking for postt request', async ({apiReq,page}) => {
   await page.goto('/')
-  const result = await api.post('https://jsonplaceholder.typicode.com/posts', postData)
+  await apiReq.post('https://jsonplaceholder.typicode.com/posts', postData)
+  const result = await apiReq.getResponseResult()
   await expect(result).toContain('"title": "foo"')
   await expect(result).toContain('"body": "bar"')
 })
 
-test('checking for patch request', async ({api, page}) =>{
+test('checking for patch request', async ({apiReq, page}) =>{
   await page.goto('/')
-  const result = await api.patch('https://jsonplaceholder.typicode.com/posts/1', patchData)
+  await apiReq.patch('https://jsonplaceholder.typicode.com/posts/1', patchData)
+  const result = await apiReq.getResponseResult()
   await expect(result).toContain('"title": "foo"')
   await expect(result).toContain('"id": 1')
 })
 
 
-const postData = `{  "title": "foo",  "body": "bar",  "userId" : 101}`
-
-
+const postData  = `{  "title": "foo",  "body": "bar",  "userId" : 101}`
 const patchData = `{  "id": 1,  "title": "foo"}`
