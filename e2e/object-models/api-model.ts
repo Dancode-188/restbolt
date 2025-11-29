@@ -46,7 +46,7 @@ export class APImodel extends  BasePage {
 
     async getResponseResult() {
         await this.sendBtn.click()
-        await this.page.waitForLoadState('domcontentloaded')
+        await this.page.waitForLoadState('networkidle')
         await this.responseBody.locator('.view-line').last().textContent()
         let result = await this.responseBody.textContent()
         result = result.replace(/\u00A0/g, ' ')
