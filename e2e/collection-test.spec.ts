@@ -18,6 +18,6 @@ test('check creation of new collection', async ({collection, apiReq ,page}) => {
     //4. Check if the request got saved in the collection
     await page.locator('div')
               .filter({has: page.getByTitle('Delete collection')})
-              .getByRole('button').filter({hasText:collectionName}).click()
+              .getByRole('button',{name:collectionName}).click()
     await expect(page.getByText('Post 1')).toBeVisible()
 })
