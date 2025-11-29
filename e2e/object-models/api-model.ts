@@ -6,7 +6,7 @@ export class APImodel extends  BasePage {
     constructor(page:Page) 
         {super(page)
         }
-        reqBuilderMain  : Locator = this.page.locator('#_R_5klrlb_')
+
         fillUrl         : Locator = this.reqBuilderMain.getByPlaceholder('https://api.example.com/endpoint')
         sendBtn         : Locator = this.reqBuilderMain.getByRole('button', {name:'Send'})
         responseSec     : Locator = this.page.locator('#_R_9klrlb_')
@@ -44,7 +44,15 @@ export class APImodel extends  BasePage {
         await this.reqBody.fill(data)
     }
 
-    async getResponseResult() {
+    async getResponseResult(collectionName?:string, reqName?:string) {
+        if(collectionName && reqName){
+            const neededReq = await this.optionSection.getByRole('button',{name: reqName})
+            if (await neededReq.isVisible()) {
+                await neededReq.click()
+            } else {
+                await this.selectReq(collectionName, reqName)
+            }
+        }
         await this.sendBtn.click()
         await this.page.waitForLoadState('networkidle')
         await this.responseBody.locator('.view-line').last().textContent()
@@ -74,4 +82,8 @@ export class APImodel extends  BasePage {
         await this.reqTestTextBox.fill(testData)
     }
     
+    async selectReq(collName:string, reqName:string) {
+        await this.optionSection.getByRole('button',{name:collName}).click()
+        await this.optionSection.getByRole('button',{name: reqName}).click()
+    }
 }

@@ -22,12 +22,11 @@ test('testing miniproject', async({collection, apiReq, envSetup, page}) => {
     await apiReq.writeTest(testData1)
     await collection.createCollection('User Collection')
     await collection.saveToCollection('login token', 'User Collection')
-    await apiReq.getResponseResult()
+    await apiReq.getResponseResult('User Collection', 'login token')
 
     await apiReq.fillHeader('Authorization', '{{toki}}')
     await apiReq.post('https://{{baseURL}}/api/users', postData2)
     await apiReq.writeTest(testData2)
     await collection.saveToCollection('login user', 'User Collection')
-    await apiReq.getResponseResult()
-
+    await apiReq.getResponseResult('User Collection', 'login user')
 })
