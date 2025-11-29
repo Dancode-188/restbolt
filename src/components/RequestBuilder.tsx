@@ -261,6 +261,11 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       if (selectedRequest.body) {
         setBody(selectedRequest.body);
       }
+
+      if (selectedRequest.postScript) {
+        setTestScript(selectedRequest.postScript)
+      }
+
     }
   }, [selectedRequest]);
 
@@ -489,6 +494,7 @@ export default function RequestBuilder({ selectedHistoryItem, selectedRequest }:
       method,
       url: url.trim(),
       headers: headersObject,
+      postScript: METHODS_WITH_BODY.includes(method) ? testScript : undefined,
       params: {},
       body: METHODS_WITH_BODY.includes(method) ? body : undefined,
       createdAt: new Date(),

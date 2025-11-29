@@ -6,6 +6,7 @@ export interface Request {
   headers: Record<string, string>;
   params: Record<string, string>;
   body?: string;
+  postScript?: string;
   createdAt: Date;
   updatedAt: Date;
 }

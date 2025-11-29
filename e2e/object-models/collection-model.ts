@@ -26,6 +26,6 @@ export class CollectionModel extends BasePage {
                                        .filter({ hasText: 'Select Collection' }).last()
         await collDiv.getByRole('textbox').fill(postNam)
         await collDiv.getByRole('button').filter({ hasText: collNam }).click()
-        await collDiv.getByLabel('Request Name (optional)').waitFor({ state: 'hidden' })
+        await collDiv.waitFor({ state: 'detached' })
     }
 }
