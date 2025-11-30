@@ -1,7 +1,7 @@
 import {type Page, type Locator} from '@playwright/test'
-import { BasePage } from './BasePage'
+import { ReqHelpers } from './request-assiters.model' 
 
-export class APImodel extends  BasePage {
+export class APImodel extends  ReqHelpers {
 
     constructor(page:Page) 
         {super(page)
@@ -16,15 +16,7 @@ export class APImodel extends  BasePage {
         reqBody         : Locator = this.reqBuilderMain.locator('div').filter({has: this.page.getByRole('presentation')})
                                                         .filter({hasText:'Request Body (JSON)'}).last()
                                                         .getByRole('textbox') 
-        reqHeaderSection: Locator = this.reqBuilderMain.getByRole('button',{name:'Headers'})
-        reqAddNewHeader : Locator = this.reqBuilderMain.getByRole('button',{name:'+ Add Header'})
-        reqHeaderName   : Locator = this.reqBuilderMain.getByPlaceholder('Header name').last()
-        reqHeaderValue  : Locator = this.reqBuilderMain.getByPlaceholder('Header value').last()
-        reqTestSec      : Locator = this.reqBuilderMain.getByRole('button',{name:'Tests'})
-        reqTestTextBox  : Locator = this.page.locator('div')
-                                                        .filter({has:this.page.getByRole('presentation')})
-                                                        .filter({hasText:'Tests (Post-response Script)'}).last()
-                                                        .getByRole('textbox')
+        
 
     async get(url:string):Promise<string> 
     {
@@ -69,18 +61,6 @@ export class APImodel extends  BasePage {
         }
     }
 
-    async fillHeader(hName:string, hValue: string) {
-        await this.reqHeaderSection.click()
-        await this.reqAddNewHeader.click()
-        await this.reqHeaderName.fill(hName)
-        await this.reqHeaderValue.fill(hValue)
-    }
-    
-    async writeTest(testData:string) {
-        await this.reqTestSec.click()
-        await this.clearall(this.reqTestTextBox)
-        await this.reqTestTextBox.fill(testData)
-    }
     
     async selectReq(collName:string, reqName:string) {
         await this.optionSection.getByRole('button',{name:collName}).click()
