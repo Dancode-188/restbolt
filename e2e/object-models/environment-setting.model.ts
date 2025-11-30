@@ -37,5 +37,10 @@ export class EnvSettings extends BasePage {
         await this.envVarSaveConfirm.click()
     }
 
-    
+    async selectEnvironment(envName:string) {
+        await this.header.getByRole('button').first().click()
+        await this.header.getByRole('button',{name:envName})
+                         .last()
+                         .click()
+    }
 }

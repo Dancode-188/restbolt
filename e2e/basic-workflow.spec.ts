@@ -26,6 +26,11 @@ test('checking for patch request', async ({apiReq, page}) =>{
   await expect(result).toContain('"id": 1')
 })
 
+test('environment select', async ({envSetup,page}) => {
+  await page.goto('/')
+  await envSetup.createNewEnv('QA1')
+  await envSetup.selectEnvironment('QA1')
+})
 
 const postData  = `{  "title": "foo",  "body": "bar",  "userId" : 101}`
 const patchData = `{  "id": 1,  "title": "foo"}`
