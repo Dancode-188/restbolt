@@ -1,7 +1,7 @@
 import {test as base} from '@playwright/test'
 import { CollectionModel } from '../object-models/collection-model'
 import { APImodel } from '../object-models/api-model'
-import { EnvSettings } from '../object-models/environment-setting.model'
+import { EnvSettings } from '../object-models/environment-setting.model' 
 
 export const test = base.extend<{
     collection: CollectionModel, 

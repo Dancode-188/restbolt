@@ -1,4 +1,4 @@
-import {test, expect} from './fixtures/collection.fixure'
+import {test, expect} from './fixtures/collection.fixture'
 
 const postData1: string = '{ "email": "eve.holt@reqres.in", "password": "cityslicka" }'
 const postData2: string = '{ "name": "morpheus", "job": "leader"}'

@@ -1,4 +1,4 @@
-import {test, expect} from './fixtures/collection.fixure' 
+import {test, expect} from './fixtures/collection.fixture' 
 
 test('check creation of new collection', async ({collection, apiReq ,page}) => {
     const collectionName = 'New Test Collection'
