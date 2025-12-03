@@ -2,14 +2,6 @@ import { type Page, Locator } from '@playwright/test'
 
 export class BasePage {
     constructor(protected page: Page) {
-        if (process.env.THROTLE) {
-            (async () => {
-                const context = this.page.context();
-                const cdpSession = await context.newCDPSession(this.page);
-                await cdpSession.send('Emulation.setCPUThrottlingRate', { rate: 6 });
-
-            })()
-        }
     }
 
     optionSection: Locator = this.page.locator('#_R_jklrlb_')

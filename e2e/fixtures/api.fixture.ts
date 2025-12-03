@@ -26,7 +26,7 @@ export const test = base.extend<MyFixtures>(
             await apiReq.fillHeader(name1, value1)
             await apiReq.fillHeader(name2, value2)
             await apiReq.fillHeader(name3, value3)
-            use()
+            await use()
         }
     }
 )
