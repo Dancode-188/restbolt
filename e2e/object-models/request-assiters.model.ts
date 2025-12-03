@@ -58,16 +58,15 @@ export class ReqHelpers extends BasePage {
     // }
 
     async fillHeader(hName:string, hValue: string) {
-    if(await this.reqAddNewHeader.isHidden()) {
-        await this.reqHeaderSection.click()
-        }   
+        await this.checkIfInheaderSection()  
         await this.reqAddNewHeader.click()
         await this.reqHeaderName.fill(hName)
         await this.reqHeaderValue.fill(hValue)
         
     }
 
-    async enableHeader(hName:string) {
+    async checkHeader(hName:string) {
+        await this.checkIfInheaderSection()
         const placeHolder :string = (await this.reqHeaderName.getAttribute('placeholder'))!
         const allph =  await this.reqBuilderMain.getByPlaceholder(placeHolder).all()
         for(let i=0; i < allph.length; i++) {
@@ -77,7 +76,8 @@ export class ReqHelpers extends BasePage {
         }
     }
     
-    async disableHeader(hName:string):Promise<Locator> {
+    async uncheckHeader(hName:string):Promise<Locator> {
+        await this.checkIfInheaderSection()
         let cb: Locator
         const placeHolder :string = (await this.reqHeaderName.getAttribute('placeholder'))!
         const allph =  await this.reqBuilderMain.getByPlaceholder(placeHolder).all()
@@ -90,6 +90,7 @@ export class ReqHelpers extends BasePage {
     }
     
     async deleteHeader(hName: string) {
+        await this.checkIfInheaderSection()
         const placeholder = (await this.reqHeaderName.getAttribute('placeholder'))!
         const allph = await this.reqBuilderMain.getByPlaceholder(placeholder).all()
         for(let i=0; i< allph.length; i++) {
@@ -103,6 +104,12 @@ export class ReqHelpers extends BasePage {
 
     }   
 
+    private async checkIfInheaderSection(){
+        if(await this.reqAddNewHeader.isHidden()) {
+        await this.reqHeaderSection.click()
+        } 
+    }
+
     async chainVariableAdd(varName: string, varVal: string) {
         await this.varaibleAddWrapper(this.reqChainVariableSec, varName, varVal)
     }
@@ -112,9 +119,7 @@ export class ReqHelpers extends BasePage {
     }
 
     protected async varaibleAddWrapper(varType: Locator, varName:string, varVal:string) {
-        if(await this.reqChainVariableSec.isHidden()) {
-            await this.reqVariableSection.click()
-        }
+        await this.checkIfInVariableSection()
         await this.reqAddNewVariableBtn.click()
         await varType.click()
         await this.reqVariableNameBox.fill(varName)
@@ -131,10 +136,7 @@ export class ReqHelpers extends BasePage {
     }
 
     protected async variableDeleteWrap(varType:Locator, varName:string) {
-        if(await this.reqBuilderMain.getByText('Chain Variable').isHidden() ||
-            await this.reqBuilderMain.getByText('Script Variable').isHidden()) {
-                this.reqVariableSection.click()
-            }
+        await this.checkIfInVariableSection()
         await varType.click()
         await varType.isEnabled()
         const varDiv = await this.page.locator('div')
@@ -154,26 +156,26 @@ export class ReqHelpers extends BasePage {
     }
 
     protected async variableclearAllWrap(varType: Locator) {
-        if(await this.reqBuilderMain.getByText('Chain Variable').isHidden() ||
-            await this.reqBuilderMain.getByText('Script Variable').isHidden()) {
-                this.reqVariableSection.click()
-            }
-        varType.click()
-        varType.isEnabled()
-        this.reqBuilderMain.getByRole('button', {name: 'Clear All'}).click()
-        this.reqBuilderMain.locator('button:has-text("CLear all"):right-of(:text("cancel"))').click()
+        await this.checkIfInVariableSection()
+        await varType.click()
+        await this.reqBuilderMain.getByRole('button', {name: 'Clear All'}).click()
+        await this.reqBuilderMain.locator('button:has-text("CLear all"):right-of(:text("cancel"))').click()
 
     }
 
     async chainVariableEdit(varName : string, newVal: string) {
-            if(await this.reqBuilderMain.getByText('Chain Variable').isHidden() ||
-            await this.reqBuilderMain.getByText('Script Variable').isHidden()) {
-                this.reqVariableSection.click()
-            }
+        await this.checkIfInVariableSection()
         await this.reqChainVariableSec.click()
         await this.page.locator(`button[title="Edit"]:near(:text("${varName}"))`).click()
         await this.page.locator(`textarea:near(:text("${varName}"))`).fill(newVal)
         await this.page.locator('button:has-text("Save"):left-of(button:has-text("cancel"))').click()
+    }
+
+    private async checkIfInVariableSection() {
+        if(await this.reqBuilderMain.getByText('Chain Variable').isHidden() ||
+            await this.reqBuilderMain.getByText('Script Variable').isHidden()) {
+                this.reqVariableSection.click()
+            }
     }
 
     async writeTest(testData:string) {
