@@ -1,4 +1,4 @@
-import {test as base } from '@playwright/test'
+import {test as base } from './base.fixture'
 import {ChainModel}  from '../object-models/chain-object'
 
 interface myFixtures {
@@ -9,8 +9,6 @@ interface myFixtures {
 export const test = base.extend<myFixtures>
 ({
     singleChain : async ({page},use) => {
-            // 1. go to page
-                await page.goto('/')
             // 2. add new chain
             const chain = new ChainModel(page)
             await chain.addNewChain('User Chain')
@@ -24,7 +22,6 @@ export const test = base.extend<myFixtures>
     },
 
     multiChain : async({page},use) => {
-            await page.goto('/')
             const chain = new ChainModel(page)
             for(let i=1; i<11; i++) {
                 await chain.addNewChain(`User Chain ${i}`)

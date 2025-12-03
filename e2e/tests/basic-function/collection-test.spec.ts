@@ -1,9 +1,7 @@
-import {test, expect} from './fixtures/collection' 
+import {test, expect} from '../../fixtures/index' 
 
 test('check creation of new collection', async ({collection, apiReq ,page}) => {
     const collectionName = 'New Test Collection'
-    
-    await page.goto("/")
 
     //1. make new collection
     await collection.createCollection(collectionName)
@@ -18,6 +16,6 @@ test('check creation of new collection', async ({collection, apiReq ,page}) => {
     //4. Check if the request got saved in the collection
     await page.locator('div')
               .filter({has: page.getByTitle('Delete collection')})
-              .getByRole('button').filter({hasText:collectionName}).click()
+              .getByRole('button',{name:collectionName}).click()
     await expect(page.getByText('Post 1')).toBeVisible()
 })
