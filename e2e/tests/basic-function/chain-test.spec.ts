@@ -1,4 +1,4 @@
-import {test, expect} from './fixtures/chain.fixtures'
+import {test, expect} from '../../fixtures/chain.fixtures'
 
 test('checking chain execution', async ({singleChain}) => {
     await expect(await singleChain.execute('User Chain')).toContainText('COMPLETED')   
