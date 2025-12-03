@@ -1,4 +1,4 @@
-import {test, expect} from '../../fixtures/collection.fixture'
+import {test, expect} from '../../fixtures/index'
 
 const postData1: string = '{ "email": "eve.holt@reqres.in", "password": "cityslicka" }'
 const postData2: string = '{ "name": "morpheus", "job": "leader"}'
@@ -10,9 +10,7 @@ pm.variables.set('userId', varb.id)
 console.log(pm.variables.get('userId'))`
 
 
-test('testing miniproject', async({collection, apiReq, envSetup, page}) => {
-    await page.goto('/')
-    
+test('testing miniproject', async({collection, apiReq, envSetup}) => {    
     await apiReq.fillHeader('x-api-key', 'reqres-free-v1')
     
     await envSetup.createNewEnv('QA')
