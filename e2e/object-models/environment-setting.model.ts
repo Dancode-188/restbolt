@@ -38,7 +38,7 @@ export class EnvSettings extends BasePage {
     }
 
     async selectEnvironment(envName:string) {
-        await this.topHeader.getByRole('button').first().click()
+        await this.topHeader.locator('button:right-of(h1:has-text("RestBolt"))').first().click()
         await this.topHeader.getByRole('button',{name:envName})
                          .last()
                          .click()
