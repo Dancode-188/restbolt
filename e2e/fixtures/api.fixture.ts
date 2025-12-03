@@ -1,16 +1,20 @@
-import {test as base} from '@playwright/test'
+import {test as base} from './base.fixture'
 import { APImodel } from '../object-models/api-model'
 
 interface MyFixtures {
-    api : APImodel
+    apiReq : APImodel,
+
 }
 
 
 export const test = base.extend<MyFixtures>(
     {
-        api : async({page},use) => {
+        apiReq : async({page},use) => {
             use(new APImodel(page))
-        }
-    })
+        },
+    }
+)
+
+    
 
 export {expect} from '@playwright/test'

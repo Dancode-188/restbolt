@@ -1,4 +1,4 @@
-import {test as base} from '@playwright/test'
+import {test as base, Page } from '../fixtures/base.fixture'
 import { CollectionModel } from '../object-models/collection-model'
 import { APImodel } from '../object-models/api-model'
 import { EnvSettings } from '../object-models/environment-setting.model'
@@ -7,7 +7,9 @@ export const test = base.extend<{
     collection: CollectionModel, 
     apiReq: APImodel,
     envSetup : EnvSettings,
-    singleCollection: any
+    singleCollection: Page,
+    preVariables : void,
+    preHeaders : void
 }>
 ({
     collection : async({page}, use) => {
@@ -19,14 +21,13 @@ export const test = base.extend<{
     envSetup: async({page},use) => {
         use(new EnvSettings(page))
     },
-    singleCollection : async({collection, apiReq, page},use) => {
-        await page.goto('/')
+    singleCollection : async({page, collection, apiReq},use) => {
         await collection.createCollection('User Collection')
         await apiReq.get('https://jsonplaceholder.typicode.com/todos/1')
         await collection.saveToCollection('Req 1', 'User Collection')
         await use(page)
-    }
-
+    },
+    
 }) 
 
 export { expect} from '@playwright/test'
