@@ -14,7 +14,7 @@ export class BasePage {
 
     optionSection: Locator = this.page.locator('#_R_jklrlb_')
     reqBuilderMain: Locator = this.page.locator('#_R_5klrlb_')
-    header: Locator = this.page.getByRole('banner')
+    topHeader: Locator = this.page.getByRole('banner')
 
     protected button(btnName: string): Locator {
         return this.page.getByRole('button', { name: btnName })

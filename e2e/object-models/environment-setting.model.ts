@@ -38,8 +38,8 @@ export class EnvSettings extends BasePage {
     }
 
     async selectEnvironment(envName:string) {
-        await this.header.getByRole('button').first().click()
-        await this.header.getByRole('button',{name:envName})
+        await this.topHeader.getByRole('button').first().click()
+        await this.topHeader.getByRole('button',{name:envName})
                          .last()
                          .click()
     }

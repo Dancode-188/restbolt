@@ -7,6 +7,8 @@ export class APImodel extends  ReqHelpers {
         {super(page)
         }
 
+        reqMainHeading : Locator = this.reqBuilderMain.getByRole('heading', {name: 'Request Builder'})
+
         fillUrl         : Locator = this.reqBuilderMain.getByPlaceholder('https://api.example.com/endpoint')
         sendBtn         : Locator = this.reqBuilderMain.getByRole('button', {name:'Send'})
         responseSec     : Locator = this.page.locator('#_R_9klrlb_')

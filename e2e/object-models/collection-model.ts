@@ -7,7 +7,7 @@ export class CollectionModel extends BasePage {
     constructor(page: Page) {
         super(page)
     }
-    
+    saveToCollectionBtn : Locator = this.page.getByTitle('Save to collection')
 
     async createCollection(colName: string) 
     {
@@ -19,7 +19,7 @@ export class CollectionModel extends BasePage {
 
     async saveToCollection(postNam: string, collNam: string) 
     {
-        await this.page.getByTitle('Save to collection').click()
+        await this.saveToCollectionBtn.click()
         // get the collection block
         const collDiv = await this.page.locator('div')
                                        .filter({ hasText: 'Request Name (optional)' })
