@@ -1,4 +1,4 @@
-import { test, expect } from '../../fixtures/collection.fixure'
+import { test, expect } from '../../fixtures/collection.fixture'
 
 
 test('checking for basic workflow functionality', async ({apiReq, page}) => {

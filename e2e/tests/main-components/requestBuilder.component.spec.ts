@@ -1,4 +1,4 @@
-import {test, expect} from '../../fixtures/collection.fixure'
+import {test, expect} from '../../fixtures/collection.fixture'
 import { ReqHelpers } from '../../object-models/request-assiters.model'
 
 //tab
