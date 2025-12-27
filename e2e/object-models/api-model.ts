@@ -20,10 +20,10 @@ export class APImodel extends  ReqHelpers {
                                                         .getByRole('textbox') 
         
 
-    async get(url:string):Promise<string> 
+    async get(url:string):Promise<void>
     {
         await this.fillUrl.fill(url)
-        
+
         await this.reqType.selectOption('GET')
     }
 
@@ -51,7 +51,7 @@ export class APImodel extends  ReqHelpers {
         await this.page.waitForLoadState('networkidle')
         await this.responseBody.locator('.view-line').last().textContent()
         let result = await this.responseBody.textContent()
-        result = result.replace(/\u00A0/g, ' ')
+        result = result?.replace(/\u00A0/g, ' ') || ''
         return result
     }
 

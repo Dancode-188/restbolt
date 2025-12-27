@@ -22,7 +22,7 @@ export default function WebSocketPanel() {
       }
     });
 
-    return () => unsubscribe();
+    return () => { unsubscribe(); };
   }, []);
 
   useEffect(() => {

@@ -26,8 +26,11 @@ export const collectionsService = {
 
     collection.requests.push(requestToAdd);
     collection.updatedAt = new Date();
-    
-    await db.collections.update(collectionId, collection);
+
+    await db.collections.update(collectionId, {
+      requests: collection.requests,
+      updatedAt: collection.updatedAt
+    });
   },
 
   async removeRequestFromCollection(collectionId: string, requestId: string) {
@@ -36,8 +39,11 @@ export const collectionsService = {
 
     collection.requests = collection.requests.filter(r => r.id !== requestId);
     collection.updatedAt = new Date();
-    
-    await db.collections.update(collectionId, collection);
+
+    await db.collections.update(collectionId, {
+      requests: collection.requests,
+      updatedAt: collection.updatedAt
+    });
   },
 
   async updateCollection(collectionId: string, updates: Partial<Collection>) {

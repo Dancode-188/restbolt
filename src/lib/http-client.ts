@@ -13,6 +13,8 @@ interface HttpClientResponse {
   statusText: string;
   headers: Record<string, string>;
   data: any;
+  time: number; // milliseconds
+  size: number; // bytes
 }
 
 class HttpClient {
@@ -33,26 +35,40 @@ class HttpClient {
       }
     }
 
+    const startTime = Date.now();
+
     try {
       const response = await axios(config);
-      
+      const endTime = Date.now();
+      const time = endTime - startTime;
+      const size = JSON.stringify(response.data).length;
+
       return {
         status: response.status,
         statusText: response.statusText,
         headers: response.headers as Record<string, string>,
         data: response.data,
+        time,
+        size,
       };
     } catch (error: any) {
+      const endTime = Date.now();
+      const time = endTime - startTime;
+
       // Handle error responses
       if (error.response) {
+        const size = JSON.stringify(error.response.data).length;
+
         return {
           status: error.response.status,
           statusText: error.response.statusText,
           headers: error.response.headers as Record<string, string>,
           data: error.response.data,
+          time,
+          size,
         };
       }
-      
+
       // Handle network errors
       throw new Error(error.message || 'Network error occurred');
     }

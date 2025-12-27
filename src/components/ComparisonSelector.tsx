@@ -115,9 +115,9 @@ export default function ComparisonSelector({ isOpen, onClose, onSelect }: Compar
                         {item.method}
                       </span>
                       <span className={`px-2 py-0.5 text-xs rounded ${
-                        item.response?.status >= 200 && item.response?.status < 300
+                        item.response?.status !== undefined && item.response.status >= 200 && item.response.status < 300
                           ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                          : item.response?.status >= 400
+                          : item.response?.status !== undefined && item.response.status >= 400
                           ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                           : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400'
                       }`}>
