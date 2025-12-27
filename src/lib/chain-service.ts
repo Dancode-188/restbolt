@@ -306,7 +306,12 @@ class ChainService {
    */
   async cancelExecution(executionId: string): Promise<void> {
     const execution = await this.getExecution(executionId);
-    if (!execution || execution.status !== 'running') return;
+    if (!execution) {
+      throw new Error(`Execution ${executionId} not found`);
+    }
+    if (execution.status !== 'running') {
+      throw new Error(`Cannot cancel execution with status: ${execution.status}`);
+    }
 
     execution.status = 'cancelled';
     execution.completedAt = new Date();
