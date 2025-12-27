@@ -379,8 +379,27 @@ class ChainService {
    * Import chain from JSON
    */
   async importChain(json: string): Promise<Chain> {
-    const chain = JSON.parse(json) as Chain;
-    
+    let parsed: any;
+
+    try {
+      parsed = JSON.parse(json);
+    } catch (error) {
+      throw new Error('Invalid JSON format');
+    }
+
+    // Validate required fields
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Invalid chain data: expected object');
+    }
+    if (!parsed.name || typeof parsed.name !== 'string') {
+      throw new Error('Invalid chain data: name is required');
+    }
+    if (!Array.isArray(parsed.steps)) {
+      throw new Error('Invalid chain data: steps must be an array');
+    }
+
+    const chain = parsed as Chain;
+
     // Generate new IDs
     chain.id = `chain-${Date.now()}`;
     chain.createdAt = new Date();
