@@ -164,8 +164,7 @@ test('add chain variable', async({page, apiReq}) => {
 
 test('delete chain varaible', async({preVariables, apiReq}) => {
     await apiReq.chainVariableDelete('chainVar1')
-    //below test is failing so i have put visisble for now
-    await expect(apiReq.reqBuilderMain.getByText('chainVar1')).toBeVisible()
+    await expect(apiReq.reqBuilderMain.getByText('chainVar1')).not.toBeVisible()
 })
 
 test('chain variables clear all', async({apiReq, preVariables}) => {
