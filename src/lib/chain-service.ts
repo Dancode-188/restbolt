@@ -230,14 +230,13 @@ class ChainService {
 
           // Check if we should continue on error
           if (!step.continueOnError) {
-            throw new Error(`Step ${i + 1} failed: ${error.message}`);
+            // Mark remaining steps as skipped
+            for (let j = i + 1; j < execution.steps.length; j++) {
+              execution.steps[j].status = 'skipped';
+            }
+            break;
           }
-
-          // Mark remaining steps as skipped
-          for (let j = i + 1; j < execution.steps.length; j++) {
-            execution.steps[j].status = 'skipped';
-          }
-          break;
+          // If continueOnError is true, continue to next step
         }
       }
 

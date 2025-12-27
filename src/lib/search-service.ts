@@ -1,5 +1,5 @@
-import { db, Collection, HistoryItem } from './db';
-import { Request } from '@/types';
+import { db, HistoryItem } from './db';
+import { Request, Collection } from '@/types';
 
 export interface SearchResult {
   id: string;

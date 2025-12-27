@@ -78,7 +78,7 @@ export class ReqHelpers extends BasePage {
     
     async uncheckHeader(hName:string):Promise<Locator> {
         await this.checkIfInheaderSection()
-        let cb: Locator
+        let cb: Locator | undefined
         const placeHolder :string = (await this.reqHeaderName.getAttribute('placeholder'))!
         const allph =  await this.reqBuilderMain.getByPlaceholder(placeHolder).all()
         for(let i=0; i < allph.length; i++) {
@@ -86,7 +86,9 @@ export class ReqHelpers extends BasePage {
                 cb = await this.reqBuilderMain.getByRole('checkbox').nth(i)
                 await cb.uncheck()
             }
-        } return cb
+        }
+        if (!cb) throw new Error(`Header ${hName} not found`)
+        return cb
     }
     
     async deleteHeader(hName: string) {
