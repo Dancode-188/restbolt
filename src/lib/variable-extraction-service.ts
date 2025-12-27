@@ -40,7 +40,8 @@ class VariableExtractionService {
           wrap: false,
         });
 
-        extracted[extraction.name] = result;
+        // Normalize undefined to null for consistency
+        extracted[extraction.name] = result === undefined ? null : result;
       } catch (error) {
         console.error(`Failed to extract variable ${extraction.name}:`, error);
         extracted[extraction.name] = null;
@@ -78,10 +79,14 @@ class VariableExtractionService {
       
       // Support nested paths like {{user.id}}
       const value = this.getNestedValue(variables, trimmedName);
-      
-      if (value === undefined || value === null) {
+
+      if (value === undefined) {
         console.warn(`Variable ${trimmedName} not found`);
-        return match; // Keep original if not found
+        return 'undefined';
+      }
+
+      if (value === null) {
+        return 'null';
       }
 
       return String(value);
