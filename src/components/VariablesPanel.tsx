@@ -14,7 +14,7 @@ interface ConfirmDialog {
 }
 
 export default function VariablesPanel() {
-  const { chainVariables, mergeChainVariables, clearChainVariables } = useStore();
+  const { chainVariables, mergeChainVariables, setChainVariables, clearChainVariables } = useStore();
   const [scriptVariables, setScriptVariables] = useState<Map<string, any>>(new Map());
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
@@ -91,7 +91,7 @@ export default function VariablesPanel() {
         if (activeSource === 'chain') {
           const newVars = { ...chainVariables };
           delete newVars[key];
-          mergeChainVariables(newVars);
+          setChainVariables(newVars);
         } else {
           scriptingService.deleteVariable(key);
           loadScriptVariables();
