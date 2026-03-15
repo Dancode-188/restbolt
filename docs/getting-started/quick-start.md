@@ -16,7 +16,7 @@
 
 Let's send your first API request!
 
-<Screenshot 2026-03-03 at 5.14.26 PM.png>
+![](2026-03-15-13-08-39.png)
 
 ### Step 1: Enter a URL
 Click the URL bar and enter:
@@ -25,7 +25,7 @@ Click the URL bar and enter:
 ### Step 2: Click Send
 Click the "Send" button or press Cmd/Ctrl+Enter
 
-<Screenshot 2026-03-09 at 7.41.45 AM.png>
+![](2026-03-15-13-10-06.png)
 
 ### Step 3: View the Response
 The response appears on the right side, beautifully formatted!
@@ -36,8 +36,10 @@ The response appears on the right side, beautifully formatted!
 
 ### Node.js version requirements
 Node.js 18+ is required to run RestBolt (https://nodejs.org/en/download). If you run RestBolt with an older version, you might encounter the following error:
-<Screenshot 2026-03-15 at 11.57.36 AM.png>
-When running `npm run dev`, you will receive this message:
+
+![](2026-03-15-13-10-58.png)
+
+When running `npm run dev`, you will receive this message if the version is older than required:
 
 ```
 You are using Node.js 16.20.2. For Next.js, Node.js version "^18.18.0 || ^19.8.0
@@ -49,7 +51,8 @@ To check your Node.js version, use the following command in Terminal:
 
 ### Ensure `npm install` completes before running `npm run dev`
 Before running `npm run dev`, you should receive the following output. This indicates `npm install` has been completed.
-<Screenshot 2026-03-15 at 12.23.26 PM.png>
+
+![](2026-03-15-13-12-41.png)
 
 ### RestBolt is a local-first (IndexedDB) application
 There is no backend server to configure when using RestBolt. Benefits include:
