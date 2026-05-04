@@ -8,6 +8,7 @@
 
 ### Steps
 
+```bash
 # Clone the repository
 git clone https://github.com/Dancode-188/restbolt.git
 cd restbolt
@@ -16,9 +17,10 @@ cd restbolt
 npm install
 
 # Start the development server
-npm run dev 
+npm run dev
+```
 
-Then open http://localhost:3000 in browser.
+Then open http://localhost:3000 in your browser.
 
 ## Your First Request
 
